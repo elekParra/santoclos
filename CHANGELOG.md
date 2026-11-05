@@ -3,6 +3,57 @@
 
 ---
 
+## 📅 Versión 1.9.0 — Corrección de Puerta en Sala Médica & Remasterización de Elementos 3D
+*Fecha: 05 de Noviembre, 2026*
+
+### 🚪 Corrección de la Puerta y Fuga en Sala del Doctor
+- Se eliminaron las falsas puertas laterales inexistentes en el *Centro de Reacondicionamiento* (`1,0`), dejando como único acceso real y coherente la **puerta sur** que conecta directamente con la Sala Central.
+- Ambos elfos malignos huyen en tromba hacia el sur a través de la puerta principal para distribuirse en el taller central y el almacén oeste.
+- Santa ya no queda bloqueado intentando salir por una puerta que no conducía a ninguna sala de la cuadrícula.
+
+### 🎨 Remasterización Visual de Elementos de Escenario
+- **Cápsulas de Reacondicionamiento 3D:**
+  - Cristal cian translúcido con gradiente de fluido curativo.
+  - Generación de burbujas dinámicas ascendentes en tiempo real.
+  - Indicador LED de estado (verde = disponible, rojo neón = ocupada).
+  - Los elfos ingresados se muestran flotando dormidos en sedación con partículas de sueño (`💤`).
+  - Cartel interactivo flotante con diseño estilizado: `👉 PULSA [E] INGRESAR`.
+- **Mesas de Trabajo Detalladas:**
+  - Mesas de peluches con costuras, hilos y ositos (`🧸🧵`).
+  - Mesas de trenes con pinturas y modelos (`🚂🎨`).
+  - Mesas médicas con microscopios y matraces químicos (`🔬🧪`).
+  - Bordes biselados con profundidad 3D y sombras volumétricas.
+- **Modelo del Dr. Valeriano en 2.5D:**
+  - Rediseñado desde cero: bata blanca médica estilizada, estetoscopio azul en el pecho, gorro quirúrgico con cruz blanca y mascarilla sanitaria.
+
+---
+
+## 📅 Versión 1.8.0 — Corrección de Fuga de Elfos, Mirada de Santa, Revisión de 3 Regalos y Entrada al Motín
+*Fecha: 05 de Noviembre, 2026*
+
+### 🎁 Revisión Estricta de los 3 Regalos
+- Ahora es obligatorio revisar **los 3 regalos** en la Sala Central para que Copito entregue la **Llave Dorada**.
+- El contador en el HUD muestra el progreso exacto: `REGALOS: X / 3`.
+- Hasta que no se revisan los 3 regalos no se desbloquea la puerta norte.
+
+### 🏃 Fuga Dinámica de los Elfos (Sin Teletransporte)
+- Los elfos malignos en el Centro de Reacondicionamiento ya no se desvanecen ni teletransportan:
+  - Al grito de Santa, **Bribón** corre en tiempo real hacia la puerta sur (hacia el Taller Central).
+  - **Trasto** corre hacia la puerta oeste (hacia el Almacén).
+  - Ambos cruzan las puertas corriendo con animación antes de posicionarse en sus respectivas salas.
+
+### 🎅 Mirada y Dirección Dinámica de Santa
+- Santa ahora **gira su mirada y rostro hacia donde camina**:
+  - Al caminar a la **izquierda/derecha**: su rostro, ojos, nariz y barba se posicionan de perfil, con volteo horizontal natural (`scale(-1, 1)`).
+  - Al caminar hacia **arriba**: se ve de espaldas, mostrando la capucha y el pelo blanco trasero.
+  - Al caminar hacia **abajo**: vista frontal completa con ojos y barba al frente.
+
+### 🍬 Desbloqueo Fluido del Taller de Golosinas (Sin Bloqueos en Puerta)
+- Se corrigió la colisión y transición de puertas (`transitionRoom`), ampliando el umbral a 140px y evitando que Santa quede atascado en el marco de la puerta este.
+- Se garantiza el cambio inmediato a la fase `candy_revolt` tan pronto como Santa cruza al Taller de Golosinas.
+
+---
+
 ## 📅 Versión 1.7.0 — Secuencia Original Preservada, Santa Frontal, Reacondicionamiento con [E]
 *Fecha: 05 de Noviembre, 2026*
 

@@ -169,7 +169,7 @@
         /* Bocadillo de Diálogo */
         #speech-bubble-container {
             position: absolute;
-            bottom: 25px;
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -177,10 +177,10 @@
             gap: 18px;
             background: rgba(255, 255, 255, 0.98);
             border: 4px solid #ff85a1;
-            padding: 14px 28px;
+            padding: 10px 22px;
             border-radius: 30px;
             box-shadow: 0 14px 35px rgba(255, 92, 138, 0.35);
-            max-width: 950px;
+            max-width: 750px;
             pointer-events: none;
             z-index: 60;
             transition: border-color 0.3s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -644,6 +644,7 @@
                 this.snowflakes = [];
                 this.bloodSplats = [];
                 this.bloodParticles = [];
+                this.fleeingRebels = []; // Elfos que huyen visualmente por la sala actual
 
                 this.initRooms();
                 this.initSnow();
@@ -770,7 +771,7 @@
                     gifts: [
                         { id: 0, x: 300, y: 280, color: '#ff70a6', ribbon: '#ffd166', inspected: false, elfIdx: 0, quote: "¡Ho Santa! Los ositos de peluche están súper suaves. 🧸✨" },
                         { id: 1, x: 740, y: 280, color: '#70d6ff', ribbon: '#ff70a6', inspected: false, elfIdx: 1, quote: "¡Pinté los trenecitos con esmalte de menta brillante! 🚂💖" },
-                        { id: 2, x: 540, y: 460, color: '#e9ff70', ribbon: '#ff9770', inspected: false, elfIdx: 2, quote: "¡Aquí tienes la LLAVE DORADA! Abre la puerta norte para inspeccionar el taller de arriba. 🔑🎉", dropsKey: true }
+                        { id: 2, x: 540, y: 460, color: '#e9ff70', ribbon: '#ff9770', inspected: false, elfIdx: 2, quote: "¡Copito examinando el último lote de regalos! 🚂🧸" }
                     ],
                     elves: [
                         { x: 360, y: 130, name: 'Pimpollo', emoji: '🧝‍♂️', coatColor: '#4cc9f0', hatColor: '#06d6a0' },
@@ -783,12 +784,12 @@
                 };
 
                 // 2. LA OTRA SALA: CENTRO DE REACONDICIONAMIENTO (1,0 - SALA NORTE)
-                // Al abrir esta puerta, aparecen los elfos malignos liándola y huyen
+                // Al abrir esta puerta, aparecen los elfos malignos liándola y huyen por la puerta sur hacia las otras salas
                 this.rooms['1,0'] = {
                     title: 'CENTRO DE REACONDICIONAMIENTO DE ELFOS',
                     theme: 'clinic_room',
-                    doors: { top: false, bottom: true, left: true, right: true },
-                    lockedDoors: { left: false, right: false },
+                    doors: { top: false, bottom: true, left: false, right: false },
+                    lockedDoors: {},
                     furniture: [
                         { x: 180, y: 150, w: 180, h: 90, depth: 28, type: 'medical_desk', title: 'Mesa de Fórmulas' },
                         { x: 720, y: 150, w: 180, h: 90, depth: 28, type: 'medical_desk', title: 'Archivo Clínico' }
@@ -797,13 +798,11 @@
                         { x: 260, y: 420, w: 130, h: 160, elfCount: 0, max: 2, label: 'Cápsula A' },
                         { x: 690, y: 420, w: 130, h: 160, elfCount: 0, max: 2, label: 'Cápsula B' }
                     ],
-                    // Doctor despejado en el centro sin mesas que lo tapen
                     doctor: { x: 540, y: 220, name: 'Dr. Valeriano', emoji: '🧑‍⚕️' },
                     rebelsSceneDone: false,
-                    // Los elfos malignos que están liándola aquí al principio
                     rebels: [
-                        { id: 0, x: 440, y: 300, name: 'Bribón', emoji: '😈', captured: false, fleeing: false, targetDoor: null, fleeSpeed: 5.5 },
-                        { id: 1, x: 640, y: 300, name: 'Trasto', emoji: '😈', captured: false, fleeing: false, targetDoor: null, fleeSpeed: 5.8 }
+                        { id: 0, x: 440, y: 300, name: 'Bribón', emoji: '😈', captured: false },
+                        { id: 1, x: 640, y: 300, name: 'Trasto', emoji: '😈', captured: false }
                     ],
                     candyWeapons: [],
                     gunPickup: null
@@ -906,22 +905,30 @@
                 const npy = this.player.y + my * this.player.speed;
 
                 const minX = 90, maxX = this.W - 90, minY = 90, maxY = this.H - 90;
-                const doorSize = 120;
+                const doorSize = 140;
                 const cx = this.W / 2, cy = this.H / 2;
 
-                const allowExitX = (npy > cy - doorSize/2 && npy < cy + doorSize/2);
-                const allowExitY = (npx > cx - doorSize/2 && npx < cx + doorSize/2);
+                const inDoorX = (this.player.y > cy - doorSize/2 && this.player.y < cy + doorSize/2);
+                const inDoorY = (this.player.x > cx - doorSize/2 && this.player.x < cx + doorSize/2);
 
-                if (npx >= minX && npx <= maxX) this.player.x = npx;
-                else if (allowExitX) {
-                    if (npx < minX && room.doors.left) this.transitionRoom(-1, 0, 'left');
-                    else if (npx > maxX && room.doors.right) this.transitionRoom(1, 0, 'right');
+                if (npx < minX) {
+                    if (inDoorX && room.doors.left) this.transitionRoom(-1, 0, 'left');
+                    else this.player.x = minX;
+                } else if (npx > maxX) {
+                    if (inDoorX && room.doors.right) this.transitionRoom(1, 0, 'right');
+                    else this.player.x = maxX;
+                } else {
+                    this.player.x = npx;
                 }
 
-                if (npy >= minY && npy <= maxY) this.player.y = npy;
-                else if (allowExitY) {
-                    if (npy < minY && room.doors.top) this.transitionRoom(0, -1, 'top');
-                    else if (npy > maxY && room.doors.bottom) this.transitionRoom(0, 1, 'bottom');
+                if (npy < minY) {
+                    if (inDoorY && room.doors.top) this.transitionRoom(0, -1, 'top');
+                    else this.player.y = minY;
+                } else if (npy > maxY) {
+                    if (inDoorY && room.doors.bottom) this.transitionRoom(0, 1, 'bottom');
+                    else this.player.y = maxY;
+                } else {
+                    this.player.y = npy;
                 }
 
                 if (mx !== 0 || my !== 0) {
@@ -976,79 +983,34 @@
                 }
 
                 // -------------------------------------------------------------
-                // Movimiento de elfos que huyen a sus salas destino
-                for (const roomKey in this.rooms) {
-                    const rm = this.rooms[roomKey];
-                    if (!rm.rebels) continue;
-                    for (let i = rm.rebels.length - 1; i >= 0; i--) {
-                        const reb = rm.rebels[i];
-                        if (reb.fleeing) {
-                            const speed = reb.fleeSpeed || 3.5;
-                            const dx = reb.targetX - reb.x;
-                            const dy = reb.targetY - reb.y;
-                            const dist = Math.hypot(dx, dy);
-                            if (dist < 5) {
-                                // Llegó a la sala objetivo
-                                reb.fleeing = false;
-                                // remover de la sala actual
-                                rm.rebels.splice(i, 1);
-                                // agregar a la sala destino
-                                const targetRoom = this.rooms[reb.targetRoom];
-                                if (targetRoom) {
-                                    targetRoom.rebels.push({
-                                        id: reb.id,
-                                        x: reb.targetX,
-                                        y: reb.targetY,
-                                        name: reb.name,
-                                        emoji: reb.emoji,
-                                        captured: false,
-                                        fleeing: false
-                                    });
-                                }
-                            } else {
-                                const ang = Math.atan2(dy, dx);
-                                reb.x += Math.cos(ang) * speed;
-                                reb.y += Math.sin(ang) * speed;
-                            }
-                        }
-                    }
-                }
                 // SECUENCIA DE PASOS EXACTA
                 // -------------------------------------------------------------
-                // Movimiento de elfos que huyen a sus salas destino
-                for (const roomKey in this.rooms) {
-                    const rm = this.rooms[roomKey];
-                    if (!rm.rebels) continue;
-                    for (let i = rm.rebels.length - 1; i >= 0; i--) {
-                        const reb = rm.rebels[i];
-                        if (reb.fleeing) {
-                            const speed = reb.fleeSpeed || 3.5;
-                            const dx = reb.targetX - reb.x;
-                            const dy = reb.targetY - reb.y;
-                            const dist = Math.hypot(dx, dy);
-                            if (dist < 5) {
-                                // Llegó a la sala objetivo
-                                reb.fleeing = false;
-                                // remover de la sala actual
-                                rm.rebels.splice(i, 1);
-                                // agregar a la sala destino
-                                const targetRoom = this.rooms[reb.targetRoom];
-                                if (targetRoom) {
-                                    targetRoom.rebels.push({
-                                        id: reb.id,
-                                        x: reb.targetX,
-                                        y: reb.targetY,
-                                        name: reb.name,
-                                        emoji: reb.emoji,
-                                        captured: false,
-                                        fleeing: false
-                                    });
-                                }
-                            } else {
-                                const ang = Math.atan2(dy, dx);
-                                reb.x += Math.cos(ang) * speed;
-                                reb.y += Math.sin(ang) * speed;
+                // Movimiento de elfos que huyen visualmente hacia la puerta de su sala destino
+                if (this.fleeingRebels && this.fleeingRebels.length > 0) {
+                    for (let i = this.fleeingRebels.length - 1; i >= 0; i--) {
+                        const reb = this.fleeingRebels[i];
+                        const speed = reb.fleeSpeed || 5;
+                        const dx = reb.fleeTargetX - reb.x;
+                        const dy = reb.fleeTargetY - reb.y;
+                        const dist = Math.hypot(dx, dy);
+                        if (dist < 8) {
+                            // Llegó a la puerta, ahora lo ponemos en su sala destino
+                            this.fleeingRebels.splice(i, 1);
+                            const destRoom = this.rooms[reb.targetRoom];
+                            if (destRoom) {
+                                destRoom.rebels.push({
+                                    id: reb.id,
+                                    x: reb.arrivalX,
+                                    y: reb.arrivalY,
+                                    name: reb.name,
+                                    emoji: reb.emoji,
+                                    captured: false
+                                });
                             }
+                        } else {
+                            const ang = Math.atan2(dy, dx);
+                            reb.x += Math.cos(ang) * speed;
+                            reb.y += Math.sin(ang) * speed;
                         }
                     }
                 }
@@ -1061,14 +1023,18 @@
                             this.sound.playSparkleSound();
                             this.createSparkles(g.x, g.y, '#ffd166', 20);
 
-                            if (g.dropsKey) {
-                                this.keysCollected++;
-                                document.getElementById('weapon-title').innerText = `LLAVES DE SALA: ${this.keysCollected}`;
+                            const inspectedCount = room.gifts.filter(gift => gift.inspected).length;
+                            document.getElementById('weapon-sub').innerText = `REGALOS: ${inspectedCount} / ${room.gifts.length}`;
+
+                            if (inspectedCount === room.gifts.length) {
+                                // Se han revisado los 3 regalos: Copito da la llave dorada
+                                this.keysCollected = 1;
+                                document.getElementById('weapon-title').innerText = `LLAVES DE SALA: 1`;
                                 this.storyPhase = 'door_unlocked';
                                 room.lockedDoors.top = false;
                                 document.getElementById('map-1-0').classList.remove('locked');
                                 document.getElementById('map-1-0').innerText = '⚠️';
-                                this.showDialogue('elf', 'Copito', '🧝‍♂️', g.quote);
+                                this.showDialogue('elf', 'Copito', '🧝‍♂️', "¡Excelente, Santa! Has revisado todos los juguetes de los artesanos. Toma la <span class=\"highlight\">LLAVE DORADA</span> y abre la puerta norte hacia el Centro de Reacondicionamiento. 🔑🎉");
                                 document.getElementById('status-display').innerText = '¡ABRE LA PUERTA NORTE CON LA LLAVE!';
                             } else {
                                 const elf = room.elves[g.elfIdx];
@@ -1130,14 +1096,15 @@
                     document.getElementById('status-display').innerText = '¡CORRE AL TALLER DE GOLOSINAS (ESTE)!';
                     this.rooms['1,1'].lockedDoors.right = false;
                     document.getElementById('map-2-1').classList.remove('locked');
+                    document.getElementById('map-2-1').innerText = '🍬';
                 }
 
                 // PASO 5: ENTRAR AL TALLER DE GOLOSINAS -> REBELIÓN ("CONSIGUE UN ARMA")
-                if (this.currentRoomX === 2 && this.currentRoomY === 1 && this.storyPhase === 'candy_alert') {
+                if (this.currentRoomX === 2 && this.currentRoomY === 1 && (this.storyPhase === 'candy_alert' || this.storyPhase === 'all_delivered_done')) {
                     this.storyPhase = 'candy_revolt';
                     this.showDialogue('evil', 'ELFO INSURGENTE', '👺', "¡Santa ya no manda aquí! ¡Hermanos, defended las golosinas!");
                     document.getElementById('status-display').innerText = 'MISIÓN: ¡CONSIGUE UN ARMA DEL SUELO!';
-                    room.hostileElves.forEach(e => e.state = 'hostile');
+                    if (room.hostileElves) room.hostileElves.forEach(e => e.state = 'hostile');
                 }
 
                 // PASO 6: RECOGER ARMAS BLANDAS A MELEE
@@ -1202,21 +1169,51 @@
             }
 
             // Los elfos malignos salen corriendo CADA UNO A OTRA SALA:
-            // Uno huye al Taller Central (1,1) y otro al Almacén Oeste (0,1)
+            // Ambos salen en tromba por la puerta sur (hacia el taller central 1,1) para luego distribuirse
             scatterRebels() {
                 const north = this.rooms['1,0'];
-                north.rebels = []; // Salen de la sala norte
 
-                this.rooms['1,1'].rebels.push({ id: 0, x: 400, y: 460, name: 'Bribón', emoji: '😈', captured: false });
-                this.rooms['0,1'].rebels.push({ id: 1, x: 500, y: 300, name: 'Trasto', emoji: '😈', captured: false });
+                // Inicializamos la lista de elfos que corren visualmente por la sala
+                if (!this.fleeingRebels) this.fleeingRebels = [];
 
-                // Abrir paso a la sala oeste
+                // Bribón corre disparado por la puerta sur hacia el Taller Central (1,1)
+                this.fleeingRebels.push({
+                    id: 0,
+                    x: 440, y: 300,
+                    name: 'Bribón',
+                    emoji: '😈',
+                    fleeTargetX: this.W / 2 - 40,
+                    fleeTargetY: this.H - 45,  // cruza la puerta sur
+                    targetRoom: '1,1',
+                    arrivalX: 380,
+                    arrivalY: 420,
+                    fleeSpeed: 5.6
+                });
+
+                // Trasto también sale por la puerta sur disparado hacia el Almacén Oeste (0,1)
+                this.fleeingRebels.push({
+                    id: 1,
+                    x: 640, y: 300,
+                    name: 'Trasto',
+                    emoji: '😈',
+                    fleeTargetX: this.W / 2 + 40,
+                    fleeTargetY: this.H - 45,  // cruza la puerta sur
+                    targetRoom: '0,1',
+                    arrivalX: 480,
+                    arrivalY: 340,
+                    fleeSpeed: 6.0
+                });
+
+                // Vaciar los rebels de la sala norte (ya están en fleeingRebels)
+                north.rebels = [];
+
+                // Abrir paso a la sala oeste en el taller central
                 this.rooms['1,1'].lockedDoors.left = false;
                 document.getElementById('map-0-1').classList.remove('locked');
 
                 this.storyPhase = 'hunt_single_rebel';
                 document.getElementById('status-display').innerText = '¡BUSCA A UN ELFO Y ATRÁPALO!';
-                this.showDialogue('santa', 'SANTA CLAUS', '🎅', "¡Han salido corriendo a las otras salas! <span class=\"highlight\">Debo capturarlos uno a uno y llevárselos al Doctor</span>.");
+                this.showDialogue('santa', 'SANTA CLAUS', '🎅', "¡Han salido corriendo por la puerta hacia las otras salas! <span class=\"highlight\">Debo capturarlos uno a uno y traérselos al Doctor</span>.");
             }
 
             // Interacción tecla 'E' para dejar al elfo que Santa lleva en brazos en la cabina
@@ -1403,6 +1400,8 @@
                 if (room.gifts) room.gifts.forEach(g => queue.push({ y: g.y, type: 'gift', obj: g }));
                 if (room.elves) room.elves.forEach(e => queue.push({ y: e.y + 10, type: 'elf', obj: e }));
                 if (room.rebels) room.rebels.forEach(r => { if (!r.captured) queue.push({ y: r.y + 10, type: 'rebel', obj: r }); });
+                // Elfos que huyen visualmente por la sala actual
+                if (this.fleeingRebels) this.fleeingRebels.forEach(fr => queue.push({ y: fr.y + 10, type: 'rebel', obj: fr }));
                 if (room.doctor) queue.push({ y: room.doctor.y + 10, type: 'doctor', obj: room.doctor });
                 if (room.hostileElves) room.hostileElves.forEach(he => queue.push({ y: he.y + 10, type: 'hostileElf', obj: he }));
 
@@ -1488,58 +1487,160 @@
             render3DFurniture(ctx, f) {
                 ctx.save();
                 const d = f.depth || 28;
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
-                this.drawRoundedRect(ctx, f.x - 6, f.y + d - 4, f.w + 12, f.h, 14);
+                // Sombra suave en el suelo
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+                this.drawRoundedRect(ctx, f.x - 6, f.y + d - 2, f.w + 12, f.h, 14);
                 ctx.fill();
 
-                ctx.fillStyle = '#e8c4b8';
-                this.drawRoundedRect(ctx, f.x, f.y + f.h - 15, f.w, d + 15, 12);
+                // Base / Grosor 3D de madera o metal clínico
+                ctx.fillStyle = (f.type === 'medical_desk') ? '#90e0ef' : (f.type === 'confection_table') ? '#ffb3c6' : '#d4a373';
+                this.drawRoundedRect(ctx, f.x, f.y + f.h - 12, f.w, d + 12, 12);
                 ctx.fill();
 
-                ctx.fillStyle = (f.type === 'medical_desk') ? '#caf0f8' : (f.type === 'confection_table') ? '#ffccd5' : '#fae1dd';
+                // Tablero superior
+                const topGrad = ctx.createLinearGradient(f.x, f.y, f.x, f.y + f.h);
+                if (f.type === 'medical_desk') {
+                    topGrad.addColorStop(0, '#ffffff');
+                    topGrad.addColorStop(1, '#caf0f8');
+                } else if (f.type === 'confection_table') {
+                    topGrad.addColorStop(0, '#fff0f3');
+                    topGrad.addColorStop(1, '#ffccd5');
+                } else {
+                    topGrad.addColorStop(0, '#faedcd');
+                    topGrad.addColorStop(1, '#e9d8a6');
+                }
+                ctx.fillStyle = topGrad;
                 this.drawRoundedRect(ctx, f.x, f.y, f.w, f.h, 14);
                 ctx.fill();
+                ctx.strokeStyle = (f.type === 'medical_desk') ? '#48cae4' : '#ccd5ae';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
 
-                ctx.fillStyle = '#6b4c59';
-                ctx.font = 'bold 13px Quicksand';
+                // Detalles sobre las mesas según tipo
+                if (f.type === 'medical_desk') {
+                    // Microscopio / Matraz de fórmulas
+                    ctx.font = '22px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🔬', f.x + 35, f.y + f.h/2 + 2);
+                    ctx.fillText('🧪', f.x + f.w - 35, f.y + f.h/2 + 2);
+                } else if (f.title.includes('Peluche')) {
+                    ctx.font = '20px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🧸', f.x + 30, f.y + f.h/2 + 2);
+                    ctx.fillText('🧵', f.x + f.w - 30, f.y + f.h/2 + 2);
+                } else if (f.title.includes('Trenecito')) {
+                    ctx.font = '20px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🚂', f.x + 30, f.y + f.h/2 + 2);
+                    ctx.fillText('🎨', f.x + f.w - 30, f.y + f.h/2 + 2);
+                } else if (f.title.includes('Caja')) {
+                    ctx.font = '24px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('📦', f.x + f.w/2, f.y + f.h/2 + 4);
+                }
+
+                // Título de la mesa
+                ctx.fillStyle = '#4a4e69';
+                ctx.font = 'bold 12px Quicksand';
                 ctx.textAlign = 'center';
-                ctx.fillText(f.title, f.x + f.w/2, f.y + 24);
+                ctx.fillText(f.title, f.x + f.w/2, f.y + 22);
                 ctx.restore();
             }
 
             render3DCabin(ctx, c) {
                 ctx.save();
-                ctx.fillStyle = 'rgba(0,0,0,0.15)';
-                this.drawRoundedRect(ctx, c.x - 5, c.y + 10, c.w + 10, c.h, 16);
+                // Sombra de cápsula
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                this.drawRoundedRect(ctx, c.x - 8, c.y + 12, c.w + 16, c.h, 20);
                 ctx.fill();
 
-                ctx.fillStyle = '#bde0fe';
-                this.drawRoundedRect(ctx, c.x, c.y, c.w, c.h, 18);
+                // Chasis exterior metálico tecnológico
+                const metalGrad = ctx.createLinearGradient(c.x, c.y, c.x + c.w, c.y);
+                metalGrad.addColorStop(0, '#0077b6');
+                metalGrad.addColorStop(0.5, '#48cae4');
+                metalGrad.addColorStop(1, '#023e8a');
+                ctx.fillStyle = metalGrad;
+                this.drawRoundedRect(ctx, c.x, c.y, c.w, c.h, 24);
                 ctx.fill();
-                ctx.strokeStyle = '#0077b6';
-                ctx.lineWidth = 3;
+
+                // Cristal criogénico interior con efecto de líquido/humo curativo
+                const glassGrad = ctx.createLinearGradient(c.x, c.y, c.x, c.y + c.h);
+                glassGrad.addColorStop(0, 'rgba(202, 240, 248, 0.85)');
+                glassGrad.addColorStop(0.7, 'rgba(144, 224, 239, 0.65)');
+                glassGrad.addColorStop(1, 'rgba(0, 180, 216, 0.85)');
+                ctx.fillStyle = glassGrad;
+                this.drawRoundedRect(ctx, c.x + 10, c.y + 16, c.w - 20, c.h - 38, 16);
+                ctx.fill();
+                ctx.strokeStyle = '#caf0f8';
+                ctx.lineWidth = 2;
                 ctx.stroke();
 
-                ctx.fillStyle = 'rgba(202, 240, 248, 0.75)';
-                this.drawRoundedRect(ctx, c.x + 12, c.y + 16, c.w - 24, c.h - 40, 12);
-                ctx.fill();
-
-                if (c.elfCount > 0) {
-                    ctx.font = '28px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('🧝', c.x + c.w/2, c.y + c.h/2);
+                // Burbujas subiendo en el líquido de la cápsula
+                const time = performance.now() * 0.002;
+                for (let b = 0; b < 3; b++) {
+                    const bx = c.x + 25 + ((b * 35) % (c.w - 50));
+                    const by = c.y + c.h - 45 - ((time * 40 + b * 30) % (c.h - 65));
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.beginPath();
+                    ctx.arc(bx, by, 3 + b, 0, Math.PI * 2);
+                    ctx.fill();
                 }
 
+                // Luz superior de estado (Verde si vacía, Roja si ocupada con elfo en tratamiento)
+                const isOccupied = (c.elfCount > 0);
+                ctx.fillStyle = isOccupied ? '#ff0054' : '#06d6a0';
+                ctx.beginPath();
+                ctx.arc(c.x + c.w/2, c.y + 8, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowColor = isOccupied ? '#ff0054' : '#06d6a0';
+                ctx.shadowBlur = 8;
+
+                // Elfo dentro de la cápsula en tratamiento
+                if (c.elfCount > 0) {
+                    ctx.save();
+                    ctx.translate(c.x + c.w/2, c.y + c.h/2 + 5);
+                    // Mini silueta de elfo flotando en sedación
+                    const floatBob = Math.sin(time * 3) * 4;
+                    ctx.fillStyle = '#ff9f1c';
+                    ctx.beginPath();
+                    ctx.ellipse(0, floatBob, 14, 13, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#ffe5d9';
+                    ctx.beginPath();
+                    ctx.arc(0, floatBob - 8, 9, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#7209b7';
+                    ctx.beginPath();
+                    ctx.moveTo(-7, floatBob - 14);
+                    ctx.lineTo(2, floatBob - 24);
+                    ctx.lineTo(7, floatBob - 14);
+                    ctx.fill();
+                    // ZZZ
+                    ctx.font = 'bold 12px Fredoka One';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText('💤', 12, floatBob - 12);
+                    ctx.restore();
+                }
+
+                ctx.shadowBlur = 0;
+                // Cartela de la cápsula
                 ctx.font = 'bold 12px Fredoka One';
                 ctx.fillStyle = '#0077b6';
                 ctx.textAlign = 'center';
                 ctx.fillText(c.label, c.x + c.w/2, c.y - 10);
 
-                // Si Santa lleva un elfo en brazos y está cerca de la cabina
-                if (this.player.carryingRebel && Math.hypot(c.x + c.w/2 - this.player.x, c.y + c.h/2 - this.player.y) < 110) {
-                    ctx.fillStyle = '#ff0055';
-                    ctx.font = 'bold 13px Fredoka One';
-                    ctx.fillText('PULSA [E] DEJAR ELFO', c.x + c.w/2, c.y + c.h + 20);
+                // Prompt interactivo [E] si Santa lleva un elfo en brazos
+                if (this.player.carryingRebel && Math.hypot(c.x + c.w/2 - this.player.x, c.y + c.h/2 - this.player.y) < 125) {
+                    ctx.fillStyle = '#fff';
+                    this.drawRoundedRect(ctx, c.x + c.w/2 - 75, c.y + c.h + 8, 150, 26, 12);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ff0054';
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#d90429';
+                    ctx.font = 'bold 11px Fredoka One';
+                    ctx.fillText('👉 PULSA [E] INGRESAR', c.x + c.w/2, c.y + c.h + 24);
                 }
 
                 ctx.restore();
@@ -1608,7 +1709,7 @@
                     ctx.font = 'bold 11px Quicksand';
                     ctx.fillStyle = '#ff5c8a';
                     ctx.textAlign = 'center';
-                    ctx.fillText(g.dropsKey ? '¡LLAVE!' : 'REVISAR', 0, 36);
+                    ctx.fillText('REVISAR', 0, 36);
                 }
                 ctx.restore();
             }
@@ -1694,30 +1795,71 @@
             render3DDoctor(ctx, doc) {
                 ctx.save();
                 ctx.translate(doc.x, doc.y);
+
+                // Sombra suave en suelo
                 ctx.fillStyle = 'rgba(0,0,0,0.18)';
                 ctx.beginPath();
-                ctx.ellipse(0, 18, 22, 10, 0, 0, Math.PI * 2);
+                ctx.ellipse(0, 18, 24, 11, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                ctx.ellipse(0, 2, 20, 18, 0, 0, Math.PI * 2);
+                // Bata médica blanca brillante con volumen
+                const coatGrad = ctx.createLinearGradient(0, -10, 0, 18);
+                coatGrad.addColorStop(0, '#ffffff');
+                coatGrad.addColorStop(1, '#e0f2fe');
+                ctx.fillStyle = coatGrad;
+                this.drawRoundedRect(ctx, -18, -12, 36, 28, 12);
                 ctx.fill();
-                ctx.fillStyle = '#0077b6';
-                ctx.fillRect(-3, -12, 6, 30);
+                ctx.strokeStyle = '#bae6fd';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Fonendoscopio / Estetoscopio azul médico
+                ctx.strokeStyle = '#0284c7';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(0, -6, 9, 0, Math.PI);
+                ctx.stroke();
+                ctx.fillStyle = '#0369a1';
+                ctx.beginPath();
+                ctx.arc(0, 5, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Cabeza
+                ctx.fillStyle = '#fde047'; // Pelo rubio peinado
+                ctx.beginPath();
+                ctx.arc(0, -17, 13, 0, Math.PI * 2);
+                ctx.fill();
 
                 ctx.fillStyle = '#ffe5d9';
                 ctx.beginPath();
-                ctx.arc(0, -9, 13, 0, Math.PI * 2);
+                ctx.arc(0, -15, 11, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.font = '30px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('🧑‍⚕️', 0, -8);
+                // Ojos inteligentes y mascarilla quirúrgica
+                ctx.fillStyle = '#0369a1';
+                ctx.beginPath();
+                ctx.arc(-4, -18, 1.8, 0, Math.PI * 2);
+                ctx.arc(4, -18, 1.8, 0, Math.PI * 2);
+                ctx.fill();
 
-                ctx.font = 'bold 13px Fredoka One';
-                ctx.fillStyle = '#0077b6';
-                ctx.fillText(doc.name, 0, -42);
+                // Mascarilla clínica celeste
+                ctx.fillStyle = '#7dd3fc';
+                this.drawRoundedRect(ctx, -7, -14, 14, 8, 3);
+                ctx.fill();
+
+                // Gorro quirúrgico
+                ctx.fillStyle = '#0284c7';
+                this.drawRoundedRect(ctx, -12, -26, 24, 9, 4);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 8px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('✚', 0, -19);
+
+                // Nombre e indicador médico
+                ctx.font = 'bold 12px Fredoka One';
+                ctx.fillStyle = '#0284c7';
+                ctx.fillText(doc.name, 0, -32);
                 ctx.restore();
             }
 
@@ -1772,12 +1914,12 @@
                 ctx.restore();
             }
 
-            /* --- SANTA CLAUS VISTO DE FRENTE (FRONT VIEW 2.5D) --- */
+            /* --- SANTA CLAUS CON VISTA Y DIRECCIÓN DINÁMICA --- */
             renderSantaFrontal(ctx, p) {
                 ctx.save();
                 ctx.translate(p.x, p.y - p.bounce);
 
-                const legWiggle = Math.sin(p.walkCycle) * 6;
+                const legWiggle = p.isMoving ? Math.sin(p.walkCycle) * 7 : 0;
 
                 // Sombra de contacto
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
@@ -1785,7 +1927,21 @@
                 ctx.ellipse(0, 18 + p.bounce, 26, 11, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 1. Botas negras vistas de frente
+                // Determinar dirección de la mirada
+                const isLeft = (p.facing === 'left');
+                const isRight = (p.facing === 'right');
+                const isUp = (p.facing === 'up');
+                const isDown = (p.facing === 'down');
+
+                // Si mira a la izquierda, invertimos horizontalmente el dibujo
+                const flipX = isLeft ? -1 : 1;
+                ctx.scale(flipX, 1);
+
+                // Offset de mirada para ojos, nariz, barba y sombrero
+                const gazeX = (isRight || isLeft) ? 6 : 0;
+                const gazeY = isUp ? -4 : (isDown ? 0 : -1);
+
+                // 1. Botas negras
                 ctx.fillStyle = '#1e2029';
                 this.drawRoundedRect(ctx, -14, 10 + legWiggle, 11, 14, 3);
                 this.drawRoundedRect(ctx, 3, 10 - legWiggle, 11, 14, 3);
@@ -1804,69 +1960,92 @@
                 ctx.fillRect(-22, -2, 44, 8);
 
                 ctx.fillStyle = '#ffd166';
-                this.drawRoundedRect(ctx, -6, -4, 12, 12, 2);
+                this.drawRoundedRect(ctx, -6 + gazeX * 0.8, -4, 12, 12, 2);
                 ctx.fill();
                 ctx.fillStyle = '#111317';
-                ctx.fillRect(-3, -1, 6, 6);
+                ctx.fillRect(-3 + gazeX * 0.8, -1, 6, 6);
 
-                // 4. Barba blanca esponjosa frontal
-                ctx.fillStyle = '#f8f9fa';
-                ctx.beginPath();
-                ctx.moveTo(-16, -14);
-                ctx.quadraticCurveTo(-18, 4, 0, 12);
-                ctx.quadraticCurveTo(18, 4, 16, -14);
-                ctx.fill();
+                if (!isUp) {
+                    // 4. Barba blanca esponjosa frontal (solo visible de frente o de perfil)
+                    ctx.fillStyle = '#f8f9fa';
+                    ctx.beginPath();
+                    ctx.moveTo(-16, -14);
+                    ctx.quadraticCurveTo(-18 + gazeX, 4, gazeX * 1.5, 12);
+                    ctx.quadraticCurveTo(18 + gazeX, 4, 16, -14);
+                    ctx.fill();
 
-                ctx.beginPath();
-                ctx.arc(-8, -4, 6, 0, Math.PI * 2);
-                ctx.arc(8, -4, 6, 0, Math.PI * 2);
-                ctx.arc(0, 0, 7, 0, Math.PI * 2);
-                ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(-8 + gazeX, -4, 6, 0, Math.PI * 2);
+                    ctx.arc(8 + gazeX, -4, 6, 0, Math.PI * 2);
+                    ctx.arc(gazeX, 0, 7, 0, Math.PI * 2);
+                    ctx.fill();
 
-                // 5. Cara y mejillas rosadas
-                ctx.fillStyle = '#ffe5d9';
-                ctx.beginPath();
-                ctx.arc(0, -16, 13, 0, Math.PI * 2);
-                ctx.fill();
+                    // 5. Cara y mejillas rosadas
+                    ctx.fillStyle = '#ffe5d9';
+                    ctx.beginPath();
+                    ctx.arc(gazeX * 0.8, -16 + gazeY, 13, 0, Math.PI * 2);
+                    ctx.fill();
 
-                ctx.fillStyle = '#ff758f';
-                ctx.beginPath();
-                ctx.arc(0, -14, 4.5, 0, Math.PI * 2);
-                ctx.fill();
+                    // Nariz
+                    ctx.fillStyle = '#ff758f';
+                    ctx.beginPath();
+                    ctx.arc(gazeX * 1.2, -14 + gazeY, 4.5, 0, Math.PI * 2);
+                    ctx.fill();
 
-                ctx.fillStyle = '#222';
-                ctx.beginPath();
-                ctx.arc(-5, -18, 2.2, 0, Math.PI * 2);
-                ctx.arc(5, -18, 2.2, 0, Math.PI * 2);
-                ctx.fill();
+                    // Ojos
+                    ctx.fillStyle = '#222';
+                    ctx.beginPath();
+                    if (isRight || isLeft) {
+                        // Perfil: un ojo más centrado y visible
+                        ctx.arc(3 + gazeX, -18 + gazeY, 2.4, 0, Math.PI * 2);
+                        ctx.arc(-4 + gazeX, -18 + gazeY, 2.0, 0, Math.PI * 2);
+                    } else {
+                        // De frente
+                        ctx.arc(-5, -18, 2.2, 0, Math.PI * 2);
+                        ctx.arc(5, -18, 2.2, 0, Math.PI * 2);
+                    }
+                    ctx.fill();
 
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(-7, -22, 5, 2.5);
-                ctx.fillRect(2, -22, 5, 2.5);
+                    // Brillo en los ojos
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(-4 + (gazeX ? 1 : 0), -19 + gazeY, 0.8, 0, Math.PI * 2);
+                    ctx.arc(6 + (gazeX ? 1 : 0), -19 + gazeY, 0.8, 0, Math.PI * 2);
+                    ctx.fill();
 
-                // 6. Gorro navideño frontal caído a un lado
+                    // Cejas
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(-7 + gazeX, -22 + gazeY, 5, 2.5);
+                    ctx.fillRect(2 + gazeX, -22 + gazeY, 5, 2.5);
+                } else {
+                    // De espaldas: Se ve la capucha y pelo blanco por detrás
+                    ctx.fillStyle = '#f8f9fa';
+                    ctx.beginPath();
+                    ctx.arc(0, -12, 14, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // 6. Gorro navideño
                 ctx.fillStyle = '#d90429';
                 ctx.beginPath();
-                ctx.moveTo(-14, -22);
-                ctx.lineTo(16, -22);
-                ctx.quadraticCurveTo(24, -28, 20, -38);
-                ctx.lineTo(-4, -34);
+                ctx.moveTo(-14, -22 + gazeY);
+                ctx.lineTo(16, -22 + gazeY);
+                ctx.quadraticCurveTo(24 + gazeX, -28, 20 + gazeX, -38);
+                ctx.lineTo(-4 + gazeX, -34);
                 ctx.fill();
 
                 ctx.fillStyle = '#ffffff';
-                this.drawRoundedRect(ctx, -16, -26, 32, 7, 3);
+                this.drawRoundedRect(ctx, -16, -26 + gazeY, 32, 7, 3);
                 ctx.fill();
 
+                // Borla blanca del gorro
                 ctx.beginPath();
-                ctx.arc(22, -36, 6, 0, Math.PI * 2);
+                ctx.arc(22 + gazeX, -36, 6, 0, Math.PI * 2);
                 ctx.fill();
 
                 // 7. Si Santa lleva un elfo en brazos (Transportándolo al doctor)
                 if (p.carryingRebel) {
-                    ctx.font = '22px sans-serif';
-                    ctx.textAlign = 'center';
-                    // Dibujar el emoji del elfo ligeramente arriba del cuerpo
-                    ctx.fillText(p.carryingRebel.emoji, 0, -30);
+                    this.renderCarriedElf(ctx, p.carryingRebel);
                 }
 
                 // 8. Manos con guantes blancos y arma empuñada
@@ -1892,6 +2071,46 @@
                 }
                 ctx.restore();
 
+                ctx.restore();
+            }
+
+            // Dibujar el elfo que Santa lleva en brazos como un mini-sprite real
+            renderCarriedElf(ctx, rebel) {
+                ctx.save();
+                ctx.translate(-18, -6);
+                // Cuerpo del mini-elfo (naranja como los rebeldes)
+                ctx.fillStyle = '#ff9f1c';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 10, 9, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Cabecita
+                ctx.fillStyle = '#ffe5d9';
+                ctx.beginPath();
+                ctx.arc(0, -8, 7, 0, Math.PI * 2);
+                ctx.fill();
+                // Ojos rojos enfadados
+                ctx.fillStyle = '#d90429';
+                ctx.beginPath();
+                ctx.arc(-3, -9, 2, 0, Math.PI * 2);
+                ctx.arc(3, -9, 2, 0, Math.PI * 2);
+                ctx.fill();
+                // Gorrito morado
+                ctx.fillStyle = '#7209b7';
+                ctx.beginPath();
+                ctx.moveTo(-7, -12);
+                ctx.lineTo(2, -22);
+                ctx.lineTo(7, -12);
+                ctx.fill();
+                // Nombre pequeño
+                ctx.font = 'bold 9px Quicksand';
+                ctx.fillStyle = '#d90429';
+                ctx.textAlign = 'center';
+                ctx.fillText(rebel.name, 0, 14);
+                // Patitas agitándose
+                const kick = Math.sin(performance.now() * 0.015) * 4;
+                ctx.fillStyle = '#1e2029';
+                ctx.fillRect(-6, 6 + kick, 4, 6);
+                ctx.fillRect(2, 6 - kick, 4, 6);
                 ctx.restore();
             }
 
