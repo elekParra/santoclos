@@ -1,0 +1,20 @@
+{
+  "name": "santas-last-christmas",
+  "version": "1.2.0",
+  "description": "Top-down retro action horror game inspired by Hotline Miami",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.80.1",
+    "howler": "^2.2.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
+  }
+}

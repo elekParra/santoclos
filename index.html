@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SANTA'S LAST CHRISTMAS — El Secreto de la Fábrica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #140b1e;
+            font-family: 'Quicksand', sans-serif;
+            color: #fff;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at 50% 50%, #2f1447 0%, #0c0514 100%);
+        }
+        canvas {
+            display: block;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 7px #ffccd5;
+            background: #fff8f0;
+            cursor: crosshair;
+            transition: box-shadow 0.5s ease;
+        }
+        .horror-active canvas {
+            box-shadow: 0 20px 70px rgba(255, 0, 40, 0.4), 0 0 0 7px #d90429 !important;
+        }
+
+        /* HUD Superior */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 50;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .hud-left {
+            display: flex;
+            gap: 14px;
+        }
+        .hud-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #ff85a1;
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(255, 133, 161, 0.35);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.4s;
+        }
+        .horror-active .hud-card {
+            border-color: #d90429;
+            box-shadow: 0 8px 25px rgba(217, 4, 41, 0.4);
+            background: rgba(30, 10, 18, 0.95);
+        }
+        .hud-icon {
+            font-size: 26px;
+        }
+        .hud-content {
+            display: flex;
+            flex-direction: column;
+        }
+        .act-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #ff5c8a;
+        }
+        .horror-active .act-title {
+            color: #ff4d6d;
+        }
+        .main-score {
+            font-family: 'Fredoka One', cursive;
+            font-size: 20px;
+            color: #5c3c78;
+        }
+        .horror-active .main-score {
+            color: #fff;
+        }
+        .item-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 15px;
+            color: #06d6a0;
+        }
+        .item-sub {
+            font-size: 13px;
+            font-weight: 700;
+            color: #8338ec;
+        }
+
+        /* Minimapa 3x3 */
+        .minimap-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #ffd166;
+            padding: 10px 14px;
+            border-radius: 18px;
+            box-shadow: 0 8px 20px rgba(255, 209, 102, 0.35);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .minimap-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 11px;
+            color: #d4a373;
+            margin-bottom: 6px;
+        }
+        .minimap-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 26px);
+            grid-template-rows: repeat(3, 26px);
+            gap: 4px;
+        }
+        .map-cell {
+            width: 26px;
+            height: 26px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        .map-cell.unlocked {
+            background: #ffccd5;
+            border: 2px solid #ff85a1;
+        }
+        .map-cell.current {
+            background: #06d6a0;
+            border: 2px solid #00b488;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(6, 214, 160, 0.6);
+        }
+        .map-cell.locked {
+            background: #e9ecef;
+            border: 2px dashed #adb5bd;
+        }
+
+        /* Bocadillo de Diálogo */
+        #speech-bubble-container {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            background: rgba(255, 255, 255, 0.98);
+            border: 4px solid #ff85a1;
+            padding: 14px 28px;
+            border-radius: 30px;
+            box-shadow: 0 14px 35px rgba(255, 92, 138, 0.35);
+            max-width: 950px;
+            pointer-events: none;
+            z-index: 60;
+            transition: border-color 0.3s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #speech-bubble-container.doctor-talking {
+            border-color: #48cae4;
+            box-shadow: 0 14px 35px rgba(72, 202, 228, 0.45);
+        }
+        #speech-bubble-container.rebel-talking {
+            border-color: #6a040f;
+            box-shadow: 0 14px 35px rgba(106, 4, 15, 0.55);
+        }
+        .avatar-box {
+            width: 62px;
+            height: 62px;
+            background: #ff5c8a;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 34px;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            flex-shrink: 0;
+            animation: bounce-avatar 1.8s infinite ease-in-out;
+            transition: background 0.3s;
+        }
+        #speech-bubble-container.doctor-talking .avatar-box {
+            background: #0077b6;
+        }
+        #speech-bubble-container.rebel-talking .avatar-box {
+            background: #370617;
+            animation: bounce-talk 0.12s infinite alternate;
+        }
+        .dialogue-content {
+            display: flex;
+            flex-direction: column;
+        }
+        .speaker-name {
+            font-family: 'Fredoka One', cursive;
+            font-size: 14px;
+            color: #ff5c8a;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+        #speech-bubble-container.doctor-talking .speaker-name {
+            color: #0077b6;
+        }
+        #speech-bubble-container.rebel-talking .speaker-name {
+            color: #9d0208;
+        }
+        .dialogue-text {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: #4a2d6b;
+            line-height: 1.4;
+        }
+        .horror-active .dialogue-text {
+            color: #ffccd5;
+        }
+        .dialogue-text span.highlight {
+            color: #ff3366;
+            font-weight: 900;
+        }
+
+        #flash-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.08s ease-out;
+            z-index: 80;
+        }
+
+        /* Modal */
+        .game-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(20, 11, 30, 0.88);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            text-align: center;
+            padding: 30px;
+        }
+        .game-modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-card {
+            background: #ffffff;
+            border: 5px solid #ffccd5;
+            padding: 36px 45px;
+            border-radius: 32px;
+            max-width: 660px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .modal-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 38px;
+            color: #ff5c8a;
+            margin-bottom: 12px;
+            text-shadow: 2px 2px 0px #ffe5ec;
+            letter-spacing: 1px;
+        }
+        .modal-sub {
+            font-size: 16px;
+            color: #6c5b7b;
+            margin-bottom: 24px;
+            line-height: 1.6;
+            font-weight: 600;
+        }
+        .btn-kawaii {
+            background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+            color: #fff;
+            font-family: 'Fredoka One', cursive;
+            font-size: 20px;
+            padding: 16px 42px;
+            border-radius: 40px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(255, 117, 140, 0.45);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .btn-kawaii:hover {
+            transform: scale(1.06);
+            box-shadow: 0 14px 30px rgba(255, 117, 140, 0.6);
+        }
+
+        @keyframes bounce-avatar {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        @keyframes bounce-talk {
+            0% { transform: translateY(0) scale(1.0); }
+            100% { transform: translateY(-7px) scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="canvas"></canvas>
+        <div id="flash-screen"></div>
+
+        <div id="ui-layer">
+            <div class="top-bar">
+                <div class="hud-left">
+                    <div class="hud-card">
+                        <div id="hud-status-ico" class="hud-icon">🎄</div>
+                        <div class="hud-content">
+                            <div id="act-label" class="act-title">SALA CENTRAL: TALLER DE REGALOS</div>
+                            <div id="status-display" class="main-score">REVISA LOS REGALOS</div>
+                        </div>
+                    </div>
+
+                    <div class="hud-card">
+                        <div id="weapon-ico" class="hud-icon">🔑</div>
+                        <div class="hud-content">
+                            <div id="weapon-title" class="item-title">LLAVES DE SALA: 0</div>
+                            <div id="weapon-sub" class="item-sub">ELFOS ATRAPADOS: 0 / 2</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="minimap-card">
+                    <div class="minimap-title">MAPA DE SALAS</div>
+                    <div class="minimap-grid">
+                        <div id="map-0-0" class="map-cell"></div>
+                        <div id="map-1-0" class="map-cell locked">🔒</div>
+                        <div id="map-2-0" class="map-cell"></div>
+                        <div id="map-0-1" class="map-cell locked">🔒</div>
+                        <div id="map-1-1" class="map-cell current">🎅</div>
+                        <div id="map-2-1" class="map-cell locked">🔒</div>
+                        <div id="map-0-2" class="map-cell"></div>
+                        <div id="map-1-2" class="map-cell"></div>
+                        <div id="map-2-2" class="map-cell"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="speech-bubble-container">
+                <div id="speaker-avatar" class="avatar-box">🎅</div>
+                <div class="dialogue-content">
+                    <div id="speaker-label" class="speaker-name">SANTA CLAUS</div>
+                    <div id="dialogue-box" class="dialogue-text">
+                        "¡Ho, ho, ho! Es Nochebuena y <span class="highlight">tengo que revisar que mis elfos trabajen</span> con amor..."
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="start-modal" class="game-modal show">
+            <div class="modal-card">
+                <h1 class="modal-title">SANTA'S LAST CHRISTMAS ✨</h1>
+                <p class="modal-sub">
+                    Revisa los regalos del taller con tus queridos artesanos. Abre la puerta del norte con la Llave Dorada. Cuando los elfos malignos escapen, <strong>captúralos uno a uno</strong> y llévalos en tus brazos con el Doctor al Centro de Reacondicionamiento.
+                </p>
+                <button id="btn-start" class="btn-kawaii">¡ENTRAR AL TALLER! 💖</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           1. AUDIO ENGINE
+           ========================================================================== */
+        class DynamicAudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+                this.step = 0;
+                this.timer = null;
+                this.speechInterval = null;
+                this.isHorrorMusic = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                    this.startMusic();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playMusicBoxNote(freq, timeOffset = 0, duration = 0.65, vol = 0.14) {
+                if (this.muted || !this.ctx || freq <= 0) return;
+                try {
+                    const now = this.ctx.currentTime + timeOffset;
+                    const osc1 = this.ctx.createOscillator();
+                    const osc2 = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc1.type = this.isHorrorMusic ? 'sawtooth' : 'sine';
+                    osc1.frequency.setValueAtTime(freq, now);
+
+                    osc2.type = 'triangle';
+                    osc2.frequency.setValueAtTime(freq * (this.isHorrorMusic ? 1.414 : 2), now);
+
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(vol, now + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+                    osc1.connect(gain);
+                    osc2.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc1.start(now);
+                    osc2.start(now);
+                    osc1.stop(now + duration);
+                    osc2.stop(now + duration);
+                } catch(e) {}
+            }
+
+            playSparkleSound() {
+                if (this.muted || !this.ctx) return;
+                const notes = [1046.50, 1318.51, 1567.98, 2093.00];
+                notes.forEach((f, idx) => {
+                    this.playMusicBoxNote(f, idx * 0.06, 0.4, 0.16);
+                });
+            }
+
+            playWhackSound() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(160, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.12);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } catch(e) {}
+            }
+
+            playGoreExplosion() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(120, now);
+                    osc.frequency.exponentialRampToValueAtTime(20, now + 0.4);
+                    gain.gain.setValueAtTime(0.8, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.45);
+
+                    const bufferSize = Math.floor(this.ctx.sampleRate * 0.35);
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.25));
+                    }
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(800, now);
+                    noise.connect(filter);
+                    filter.connect(this.ctx.destination);
+                    noise.start(now);
+                } catch(e) {}
+            }
+
+            playGunshot() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(35, now + 0.2);
+                    gain.gain.setValueAtTime(0.7, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.22);
+                } catch(e) {}
+            }
+
+            playEvilElfChirp() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    const baseFreq = 420 + Math.random() * 260;
+                    osc.frequency.setValueAtTime(baseFreq, now);
+                    osc.frequency.linearRampToValueAtTime(baseFreq - 150, now + 0.08);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } catch(e) {}
+            }
+
+            triggerSpeech(type = 'elf', durationMs = 2000) {
+                if (this.speechInterval) clearInterval(this.speechInterval);
+                const start = Date.now();
+                this.speechInterval = setInterval(() => {
+                    if (Date.now() - start > durationMs) {
+                        clearInterval(this.speechInterval);
+                        this.speechInterval = null;
+                        return;
+                    }
+                    if (type === 'evil') this.playEvilElfChirp();
+                    else this.playMusicBoxNote(800 + Math.random() * 400, 0, 0.08, 0.15);
+                }, 90);
+            }
+
+            startMusic() {
+                if (this.timer) clearInterval(this.timer);
+                const melody = [
+                    523.25, 0, 659.25, 0, 783.99, 0, 1046.50, 0,
+                    880.00, 0, 783.99, 0, 659.25, 0, 0, 0,
+                    587.33, 0, 659.25, 0, 783.99, 0, 659.25, 0,
+                    523.25, 0, 587.33, 0, 523.25, 0, 0, 0
+                ];
+
+                this.timer = setInterval(() => {
+                    if (this.muted || !this.ctx) return;
+                    const f = melody[this.step % melody.length];
+                    if (f > 0) this.playMusicBoxNote(f, 0, 0.45, 0.12);
+                    this.step++;
+                }, 160);
+            }
+        }
+
+        /* ==========================================================================
+           2. MOTOR PRINCIPAL CON SECUENCIA FIEL:
+              1) Revisar regalos y hablar con elfos normales
+              2) Ir a otra sala donde aparecen los elfos malignos y huyen a distintas salas
+              3) Capturar UNO A UNO y llevar CADA UNO al doctor antes de por el siguiente
+           ========================================================================== */
+        class GameStoryEngine {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.sound = new DynamicAudioEngine();
+
+                this.W = 1080;
+                this.H = 720;
+                this.canvas.width = this.W;
+                this.canvas.height = this.H;
+
+                this.keys = {};
+                this.mouse = { x: this.W / 2, y: this.H / 2, down: false };
+
+                // Empezamos en la Sala Central (1,1)
+                this.currentRoomX = 1;
+                this.currentRoomY = 1;
+
+                this.player = {
+                    x: this.W / 2,
+                    y: this.H / 2 + 50,
+                    radius: 26,
+                    speed: 4.8,
+                    walkCycle: 0,
+                    bounce: 0,
+                    facing: 'down', // 'down', 'up', 'left', 'right'
+                    isMoving: false,
+                    idleTime: 0,
+                    carryingRebel: null, // Si lleva un elfo en brazos para llevarlo al doctor
+                    weapon: null,
+                    attackCooldown: 0,
+                    swingAnim: 0
+                };
+
+                /* ETAPAS:
+                   1. 'gifts_review': En la primera sala, revisar los regalos y hablar con los elfos normales.
+                   2. 'door_unlocked': El último regalo da la llave dorada para ir a la otra sala.
+                   3. 'confrontation': En la otra sala aparecen los elfos malignos y salen corriendo cada uno a otra sala.
+                   4. 'hunt_single_rebel': Buscar a UN elfo maligno y capturarlo.
+                   5. 'carry_to_doctor': Tras capturarlo, llevarlo al doctor en la sala médica para depositarlo con [E].
+                   6. 'candy_alert': Tras entregar a los elfos al doctor, llega el elfo ayudante corriendo sobre el Taller de Golosinas.
+                   7. 'candy_revolt': Rebelión en golosinas ("consigue un arma").
+                   8. 'candy_fight': Golpear con bastones/piruletas (noqueados sin sangre).
+                   9. 'gun_found': Aparece la pistola.
+                   10. 'first_gore': Disparo -> elf destrozado con sangre y sonido de rotura ósea.
+                */
+                this.storyPhase = 'gifts_review';
+
+                this.keysCollected = 0;
+                this.rebelsDelivered = 0;
+                this.totalRebels = 2; // Dos elfos malignos huidos para entrega 1 a 1
+
+                this.sparkles = [];
+                this.snowflakes = [];
+                this.bloodSplats = [];
+                this.bloodParticles = [];
+
+                this.initRooms();
+                this.initSnow();
+                this.bindEvents();
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                this.updateMinimap();
+
+                this.lastTime = performance.now();
+                requestAnimationFrame((t) => this.loop(t));
+            }
+
+            resizeCanvas() {
+                const aspect = this.W / this.H;
+                let w = window.innerWidth * 0.94;
+                let h = window.innerHeight * 0.94;
+                if (w / h > aspect) w = h * aspect;
+                else h = w / aspect;
+                this.canvas.style.width = `${Math.floor(w)}px`;
+                this.canvas.style.height = `${Math.floor(h)}px`;
+            }
+
+            bindEvents() {
+                window.addEventListener('keydown', (e) => {
+                    const k = e.key.toLowerCase();
+                    this.keys[k] = true;
+
+                    if (k === 'e') {
+                        this.handleInteractionE();
+                    }
+
+                    if (e.key === ' ' || e.code === 'Space') {
+                        const m = document.getElementById('start-modal');
+                        if (m.classList.contains('show')) this.startGame();
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    this.keys[e.key.toLowerCase()] = false;
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.mouse.x = (e.clientX - rect.left) * (this.W / rect.width);
+                    this.mouse.y = (e.clientY - rect.top) * (this.H / rect.height);
+                });
+
+                window.addEventListener('mousedown', (e) => {
+                    if (e.button === 0) {
+                        this.mouse.down = true;
+                        this.handlePlayerAttack();
+                    }
+                });
+
+                window.addEventListener('mouseup', (e) => {
+                    if (e.button === 0) this.mouse.down = false;
+                });
+
+                document.getElementById('btn-start').onclick = () => this.startGame();
+            }
+
+            startGame() {
+                this.sound.init();
+                document.getElementById('start-modal').classList.remove('show');
+                this.sound.playSparkleSound();
+            }
+
+            showDialogue(type, speaker, avatar, text) {
+                const bubble = document.getElementById('speech-bubble-container');
+                const av = document.getElementById('speaker-avatar');
+                const sp = document.getElementById('speaker-label');
+                const tx = document.getElementById('dialogue-box');
+
+                bubble.classList.remove('doctor-talking', 'rebel-talking');
+                if (type === 'evil') {
+                    bubble.classList.add('rebel-talking');
+                    this.sound.triggerSpeech('evil', 2200);
+                } else if (type === 'doctor') {
+                    bubble.classList.add('doctor-talking');
+                    this.sound.triggerSpeech('doctor', 2500);
+                } else {
+                    this.sound.triggerSpeech('elf', 1800);
+                }
+
+                av.innerText = avatar;
+                sp.innerText = speaker;
+                tx.innerHTML = text;
+            }
+
+            triggerScreenFlash() {
+                const fl = document.getElementById('flash-screen');
+                fl.style.opacity = '0.9';
+                setTimeout(() => fl.style.opacity = '0', 70);
+            }
+
+            initSnow() {
+                for (let i = 0; i < 40; i++) {
+                    this.snowflakes.push({
+                        x: Math.random() * this.W,
+                        y: Math.random() * this.H,
+                        radius: 1.5 + Math.random() * 3,
+                        speedY: 0.8 + Math.random() * 1.2,
+                        speedX: (Math.random() - 0.5) * 0.6,
+                        alpha: 0.4 + Math.random() * 0.5
+                    });
+                }
+            }
+
+            initRooms() {
+                this.rooms = {};
+
+                // 1. PRIMERA SALA: TALLER CENTRAL (1,1)
+                // Aquí primero se revisan los regalos y se habla con los elfos normales
+                this.rooms['1,1'] = {
+                    title: 'SALA CENTRAL: TALLER DE REGALOS',
+                    theme: 'cozy_wood',
+                    doors: { top: true, bottom: false, left: true, right: true },
+                    lockedDoors: { top: true, left: true, right: true },
+                    furniture: [
+                        { x: 260, y: 160, w: 200, h: 90, depth: 28, title: 'Taller de Peluches' },
+                        { x: 620, y: 160, w: 200, h: 90, depth: 28, title: 'Trenecitos' }
+                    ],
+                    gifts: [
+                        { id: 0, x: 300, y: 280, color: '#ff70a6', ribbon: '#ffd166', inspected: false, elfIdx: 0, quote: "¡Ho Santa! Los ositos de peluche están súper suaves. 🧸✨" },
+                        { id: 1, x: 740, y: 280, color: '#70d6ff', ribbon: '#ff70a6', inspected: false, elfIdx: 1, quote: "¡Pinté los trenecitos con esmalte de menta brillante! 🚂💖" },
+                        { id: 2, x: 540, y: 460, color: '#e9ff70', ribbon: '#ff9770', inspected: false, elfIdx: 2, quote: "¡Aquí tienes la LLAVE DORADA! Abre la puerta norte para inspeccionar el taller de arriba. 🔑🎉", dropsKey: true }
+                    ],
+                    elves: [
+                        { x: 360, y: 130, name: 'Pimpollo', emoji: '🧝‍♂️', coatColor: '#4cc9f0', hatColor: '#06d6a0' },
+                        { x: 720, y: 130, name: 'Cascabel', emoji: '🧝‍♀️', coatColor: '#3a86ff', hatColor: '#ff4d6d' },
+                        { x: 540, y: 340, name: 'Copito', emoji: '🧝‍♂️', coatColor: '#ffd166', hatColor: '#06d6a0' }
+                    ],
+                    rebels: [],
+                    candyWeapons: [],
+                    gunPickup: null
+                };
+
+                // 2. LA OTRA SALA: CENTRO DE REACONDICIONAMIENTO (1,0 - SALA NORTE)
+                // Al abrir esta puerta, aparecen los elfos malignos liándola y huyen
+                this.rooms['1,0'] = {
+                    title: 'CENTRO DE REACONDICIONAMIENTO DE ELFOS',
+                    theme: 'clinic_room',
+                    doors: { top: false, bottom: true, left: true, right: true },
+                    lockedDoors: { left: false, right: false },
+                    furniture: [
+                        { x: 180, y: 150, w: 180, h: 90, depth: 28, type: 'medical_desk', title: 'Mesa de Fórmulas' },
+                        { x: 720, y: 150, w: 180, h: 90, depth: 28, type: 'medical_desk', title: 'Archivo Clínico' }
+                    ],
+                    cabins: [
+                        { x: 260, y: 420, w: 130, h: 160, elfCount: 0, max: 2, label: 'Cápsula A' },
+                        { x: 690, y: 420, w: 130, h: 160, elfCount: 0, max: 2, label: 'Cápsula B' }
+                    ],
+                    // Doctor despejado en el centro sin mesas que lo tapen
+                    doctor: { x: 540, y: 220, name: 'Dr. Valeriano', emoji: '🧑‍⚕️' },
+                    rebelsSceneDone: false,
+                    // Los elfos malignos que están liándola aquí al principio
+                    rebels: [
+                        { id: 0, x: 440, y: 300, name: 'Bribón', emoji: '😈', captured: false, fleeing: false, targetDoor: null, fleeSpeed: 5.5 },
+                        { id: 1, x: 640, y: 300, name: 'Trasto', emoji: '😈', captured: false, fleeing: false, targetDoor: null, fleeSpeed: 5.8 }
+                    ],
+                    candyWeapons: [],
+                    gunPickup: null
+                };
+
+                // 3. SALA OESTE: ALMACÉN (0,1) - Uno de los elfos huye aquí
+                this.rooms['0,1'] = {
+                    title: 'SALA OESTE: ALMACÉN DE CAJAS',
+                    theme: 'warehouse',
+                    doors: { top: false, bottom: false, left: false, right: true },
+                    lockedDoors: {},
+                    furniture: [
+                        { x: 240, y: 200, w: 140, h: 140, depth: 30, title: 'Pila de Cajas' },
+                        { x: 680, y: 380, w: 160, h: 120, depth: 30, title: 'Empaquetado' }
+                    ],
+                    rebels: [],
+                    candyWeapons: [],
+                    gunPickup: null
+                };
+
+                // 4. SALA ESTE: TALLER DE GOLOSINAS (2,1)
+                this.rooms['2,1'] = {
+                    title: 'TALLER DE GOLOSINAS & DULCES',
+                    theme: 'candy_kingdom',
+                    doors: { top: false, bottom: false, left: true, right: false },
+                    lockedDoors: {},
+                    furniture: [
+                        { x: 200, y: 150, w: 160, h: 100, depth: 32, title: 'Caldero de Menta' },
+                        { x: 720, y: 150, w: 160, h: 100, depth: 32, title: 'Fuente de Caramelo' },
+                        { x: 380, y: 440, w: 320, h: 110, depth: 30, title: 'Mesa de Bastones Dulces' }
+                    ],
+                    candyDecor: [
+                        { x: 140, y: 320, type: 'giant_cane' },
+                        { x: 940, y: 320, type: 'giant_cane' }
+                    ],
+                    candyWeapons: [
+                        { id: 'candy_cane', x: 380, y: 340, name: 'Bastón de Caramelo', icon: '🍭', type: 'melee' },
+                        { id: 'lollipop', x: 700, y: 340, name: 'Piruleta Gigante', icon: '🍭', type: 'melee' }
+                    ],
+                    hostileElves: [
+                        { id: 0, x: 420, y: 240, hp: 60, state: 'idle', knocked: false },
+                        { id: 1, x: 540, y: 220, hp: 60, state: 'idle', knocked: false },
+                        { id: 2, x: 660, y: 240, hp: 60, state: 'idle', knocked: false }
+                    ],
+                    gunPickup: null
+                };
+            }
+
+            getCurrentRoom() {
+                return this.rooms[`${this.currentRoomX},${this.currentRoomY}`];
+            }
+
+            updateMinimap() {
+                for (let x = 0; x <= 2; x++) {
+                    for (let y = 0; y <= 2; y++) {
+                        const cell = document.getElementById(`map-${x}-${y}`);
+                        if (!cell) continue;
+                        const r = this.rooms[`${x},${y}`];
+                        if (r) {
+                            if (x === this.currentRoomX && y === this.currentRoomY) {
+                                cell.className = 'map-cell current';
+                                cell.innerText = '🎅';
+                            } else {
+                                cell.className = 'map-cell unlocked';
+                                cell.innerText = (x === 1 && y === 0) ? '🏥' : (x === 2 && y === 1) ? '🍬' : '📦';
+                            }
+                        } else {
+                            cell.className = 'map-cell';
+                            cell.innerText = '';
+                        }
+                    }
+                }
+            }
+
+            loop(now) {
+                const dt = Math.min((now - this.lastTime) / 1000, 0.05);
+                this.lastTime = now;
+                this.update(dt, now);
+                this.render();
+                requestAnimationFrame((t) => this.loop(t));
+            }
+
+            update(dt, now) {
+                const room = this.getCurrentRoom();
+                document.getElementById('act-label').innerText = room.title;
+
+                // Movimiento
+                let mx = 0, my = 0;
+                if (this.keys['w'] || this.keys['arrowup']) my -= 1;
+                if (this.keys['s'] || this.keys['arrowdown']) my += 1;
+                if (this.keys['a'] || this.keys['arrowleft']) mx -= 1;
+                if (this.keys['d'] || this.keys['arrowright']) mx += 1;
+
+                if (mx !== 0 && my !== 0) {
+                    mx *= 0.7071;
+                    my *= 0.7071;
+                }
+
+                const npx = this.player.x + mx * this.player.speed;
+                const npy = this.player.y + my * this.player.speed;
+
+                const minX = 90, maxX = this.W - 90, minY = 90, maxY = this.H - 90;
+                const doorSize = 120;
+                const cx = this.W / 2, cy = this.H / 2;
+
+                const allowExitX = (npy > cy - doorSize/2 && npy < cy + doorSize/2);
+                const allowExitY = (npx > cx - doorSize/2 && npx < cx + doorSize/2);
+
+                if (npx >= minX && npx <= maxX) this.player.x = npx;
+                else if (allowExitX) {
+                    if (npx < minX && room.doors.left) this.transitionRoom(-1, 0, 'left');
+                    else if (npx > maxX && room.doors.right) this.transitionRoom(1, 0, 'right');
+                }
+
+                if (npy >= minY && npy <= maxY) this.player.y = npy;
+                else if (allowExitY) {
+                    if (npy < minY && room.doors.top) this.transitionRoom(0, -1, 'top');
+                    else if (npy > maxY && room.doors.bottom) this.transitionRoom(0, 1, 'bottom');
+                }
+
+                if (mx !== 0 || my !== 0) {
+                    this.player.isMoving = true;
+                    this.player.walkCycle += dt * 10;
+                    this.player.bounce = Math.abs(Math.sin(this.player.walkCycle)) * 4.5;
+                    this.player.idleTime = 0;
+                    if (Math.abs(mx) > Math.abs(my)) {
+                        this.player.facing = mx > 0 ? 'right' : 'left';
+                    } else {
+                        this.player.facing = my > 0 ? 'down' : 'up';
+                    }
+                } else {
+                    this.player.isMoving = false;
+                    this.player.bounce = 0;
+                    this.player.idleTime += dt;
+                }
+
+                if (this.player.attackCooldown > 0) this.player.attackCooldown -= dt;
+                if (this.player.swingAnim > 0) this.player.swingAnim -= dt * 6;
+
+                // Nieve
+                for (let i = 0; i < this.snowflakes.length; i++) {
+                    const s = this.snowflakes[i];
+                    s.y += s.speedY;
+                    s.x += s.speedX + Math.sin(now * 0.001 + i) * 0.3;
+                    if (s.y > this.H) s.y = 0;
+                    if (s.x > this.W) s.x = 0;
+                }
+
+                // Sangre
+                for (let i = this.bloodParticles.length - 1; i >= 0; i--) {
+                    const p = this.bloodParticles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vx *= 0.92;
+                    p.vy *= 0.92;
+                    p.life -= dt;
+                    if (p.life <= 0) {
+                        this.bloodSplats.push({ x: p.x, y: p.y, r: p.r * 1.5, color: p.color });
+                        this.bloodParticles.splice(i, 1);
+                    }
+                }
+
+                // Destellos
+                for (let i = this.sparkles.length - 1; i >= 0; i--) {
+                    const p = this.sparkles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= dt;
+                    if (p.life <= 0) this.sparkles.splice(i, 1);
+                }
+
+                // -------------------------------------------------------------
+                // Movimiento de elfos que huyen a sus salas destino
+                for (const roomKey in this.rooms) {
+                    const rm = this.rooms[roomKey];
+                    if (!rm.rebels) continue;
+                    for (let i = rm.rebels.length - 1; i >= 0; i--) {
+                        const reb = rm.rebels[i];
+                        if (reb.fleeing) {
+                            const speed = reb.fleeSpeed || 3.5;
+                            const dx = reb.targetX - reb.x;
+                            const dy = reb.targetY - reb.y;
+                            const dist = Math.hypot(dx, dy);
+                            if (dist < 5) {
+                                // Llegó a la sala objetivo
+                                reb.fleeing = false;
+                                // remover de la sala actual
+                                rm.rebels.splice(i, 1);
+                                // agregar a la sala destino
+                                const targetRoom = this.rooms[reb.targetRoom];
+                                if (targetRoom) {
+                                    targetRoom.rebels.push({
+                                        id: reb.id,
+                                        x: reb.targetX,
+                                        y: reb.targetY,
+                                        name: reb.name,
+                                        emoji: reb.emoji,
+                                        captured: false,
+                                        fleeing: false
+                                    });
+                                }
+                            } else {
+                                const ang = Math.atan2(dy, dx);
+                                reb.x += Math.cos(ang) * speed;
+                                reb.y += Math.sin(ang) * speed;
+                            }
+                        }
+                    }
+                }
+                // SECUENCIA DE PASOS EXACTA
+                // -------------------------------------------------------------
+                // Movimiento de elfos que huyen a sus salas destino
+                for (const roomKey in this.rooms) {
+                    const rm = this.rooms[roomKey];
+                    if (!rm.rebels) continue;
+                    for (let i = rm.rebels.length - 1; i >= 0; i--) {
+                        const reb = rm.rebels[i];
+                        if (reb.fleeing) {
+                            const speed = reb.fleeSpeed || 3.5;
+                            const dx = reb.targetX - reb.x;
+                            const dy = reb.targetY - reb.y;
+                            const dist = Math.hypot(dx, dy);
+                            if (dist < 5) {
+                                // Llegó a la sala objetivo
+                                reb.fleeing = false;
+                                // remover de la sala actual
+                                rm.rebels.splice(i, 1);
+                                // agregar a la sala destino
+                                const targetRoom = this.rooms[reb.targetRoom];
+                                if (targetRoom) {
+                                    targetRoom.rebels.push({
+                                        id: reb.id,
+                                        x: reb.targetX,
+                                        y: reb.targetY,
+                                        name: reb.name,
+                                        emoji: reb.emoji,
+                                        captured: false,
+                                        fleeing: false
+                                    });
+                                }
+                            } else {
+                                const ang = Math.atan2(dy, dx);
+                                reb.x += Math.cos(ang) * speed;
+                                reb.y += Math.sin(ang) * speed;
+                            }
+                        }
+                    }
+                }
+
+                // PASO 1: EN LA PRIMERA SALA REVISAR LOS REGALOS Y HABLAR CON LOS ELFOS NORMALES
+                if (this.storyPhase === 'gifts_review' && room.gifts) {
+                    room.gifts.forEach(g => {
+                        if (!g.inspected && Math.hypot(g.x - this.player.x, g.y - this.player.y) < 65) {
+                            g.inspected = true;
+                            this.sound.playSparkleSound();
+                            this.createSparkles(g.x, g.y, '#ffd166', 20);
+
+                            if (g.dropsKey) {
+                                this.keysCollected++;
+                                document.getElementById('weapon-title').innerText = `LLAVES DE SALA: ${this.keysCollected}`;
+                                this.storyPhase = 'door_unlocked';
+                                room.lockedDoors.top = false;
+                                document.getElementById('map-1-0').classList.remove('locked');
+                                document.getElementById('map-1-0').innerText = '⚠️';
+                                this.showDialogue('elf', 'Copito', '🧝‍♂️', g.quote);
+                                document.getElementById('status-display').innerText = '¡ABRE LA PUERTA NORTE CON LA LLAVE!';
+                            } else {
+                                const elf = room.elves[g.elfIdx];
+                                this.showDialogue('elf', elf.name, elf.emoji, g.quote);
+                            }
+                        }
+                    });
+                }
+
+                // PASO 2: ENTRAR A LA OTRA SALA (NORTE) -> APARECEN LOS ELFOS MALIGNOS LIÁNDOLA Y HUYEN A OTRAS SALAS
+                if (this.currentRoomX === 1 && this.currentRoomY === 0 && this.storyPhase === 'door_unlocked') {
+                    this.storyPhase = 'confrontation';
+                    this.showDialogue('santa', 'SANTA CLAUS', '🎅', "¡¿Pero qué estáis haciendo aquí?! <span class=\"highlight\">¡QUIETOS AHÍ, DUENDECILLOS!</span>");
+
+                    setTimeout(() => {
+                        this.showDialogue('evil', 'BRIBÓN', '😈', "¡Oh no, es Santa! ¡Rápido, corred cada uno a una sala antes de que nos atrape!");
+                        this.scatterRebels();
+                    }, 2400);
+                }
+
+                // PASO 3: CAPTURAR UNO A UNO Y LLEVARLO AL DOCTOR
+                // Si no lleva ningún elfo encima, puede atrapar al que encuentre
+                if (this.storyPhase === 'hunt_single_rebel' && room.rebels && !this.player.carryingRebel) {
+                    room.rebels.forEach((rebel, idx) => {
+                        if (rebel.captured) return;
+                        const dist = Math.hypot(rebel.x - this.player.x, rebel.y - this.player.y);
+                        if (dist < 180) {
+                            const ang = Math.atan2(rebel.y - this.player.y, rebel.x - this.player.x);
+                            rebel.x += Math.cos(ang) * 4.8;
+                            rebel.y += Math.sin(ang) * 4.8;
+                            if (rebel.x < 110) rebel.x = 110;
+                            if (rebel.x > this.W - 110) rebel.x = this.W - 110;
+                            if (rebel.y < 110) rebel.y = 110;
+                            if (rebel.y > this.H - 110) rebel.y = this.H - 110;
+                        }
+
+                        if (dist < 55) {
+                            rebel.captured = true;
+                            this.player.carryingRebel = rebel; // Santa lo lleva en brazos
+                            this.storyPhase = 'carry_to_doctor';
+                            this.sound.playSparkleSound();
+                            this.createSparkles(rebel.x, rebel.y, '#ffd166', 25);
+                            document.getElementById('weapon-sub').innerText = `LLEVANDO: ${rebel.name.toUpperCase()} AL DOCTOR`;
+                            this.showDialogue('evil', rebel.name, '😈', "¡Suéltame, anciano! ¡No me lleves con el doctor!");
+                            document.getElementById('status-display').innerText = `¡LLEVA A ${rebel.name.toUpperCase()} AL DOCTOR!`;
+                        }
+                    });
+                }
+
+                // Indicador cuando llega a la sala del doctor con un elfo en brazos
+                if (this.currentRoomX === 1 && this.currentRoomY === 0 && this.storyPhase === 'carry_to_doctor') {
+                    document.getElementById('status-display').innerText = 'PULSA [E] EN LA CÁPSULA PARA ENTREGAR AL ELFO';
+                }
+
+                // PASO 4: TRAS ENTREGAR TODOS LOS ELFOS AL DOCTOR -> AL SALIR AL TALLER LLEGA EL AYUDANTE CORRIENDO
+                if (this.currentRoomX === 1 && this.currentRoomY === 1 && this.storyPhase === 'all_delivered_done') {
+                    this.storyPhase = 'candy_alert';
+                    this.showDialogue('elf', 'ELFO AYUDANTE', '🏃💨', "¡SANTA! ¡ALERTA! ¡Hay un motín en el <strong>Taller de Golosinas</strong> (Sala Este)! ¡Están rompiendo los dulces!");
+                    document.getElementById('status-display').innerText = '¡CORRE AL TALLER DE GOLOSINAS (ESTE)!';
+                    this.rooms['1,1'].lockedDoors.right = false;
+                    document.getElementById('map-2-1').classList.remove('locked');
+                }
+
+                // PASO 5: ENTRAR AL TALLER DE GOLOSINAS -> REBELIÓN ("CONSIGUE UN ARMA")
+                if (this.currentRoomX === 2 && this.currentRoomY === 1 && this.storyPhase === 'candy_alert') {
+                    this.storyPhase = 'candy_revolt';
+                    this.showDialogue('evil', 'ELFO INSURGENTE', '👺', "¡Santa ya no manda aquí! ¡Hermanos, defended las golosinas!");
+                    document.getElementById('status-display').innerText = 'MISIÓN: ¡CONSIGUE UN ARMA DEL SUELO!';
+                    room.hostileElves.forEach(e => e.state = 'hostile');
+                }
+
+                // PASO 6: RECOGER ARMAS BLANDAS A MELEE
+                if (room.candyWeapons) {
+                    room.candyWeapons.forEach((w, idx) => {
+                        if (Math.hypot(w.x - this.player.x, w.y - this.player.y) < 55) {
+                            this.player.weapon = w.id;
+                            document.getElementById('weapon-ico').innerText = w.icon;
+                            document.getElementById('weapon-title').innerText = w.name.toUpperCase();
+                            document.getElementById('weapon-sub').innerText = 'CLIC IZQ: GOLPEAR (MELEE)';
+                            this.sound.playSparkleSound();
+                            room.candyWeapons.splice(idx, 1);
+
+                            if (this.storyPhase === 'candy_revolt') {
+                                this.storyPhase = 'candy_fight';
+                                document.getElementById('status-display').innerText = '¡NOQUEA A LOS AMOTINADOS CON TU ARMA DULCE!';
+                                this.showDialogue('santa', 'SANTA CLAUS', '🎅', "¡Solo os daré un coscorrón para que os calméis!");
+                            }
+                        }
+                    });
+                }
+
+                // PASO 7: SI TODOS NOQUEADOS -> APARECE LA PISTOLA
+                if (this.storyPhase === 'candy_fight') {
+                    const allKnocked = room.hostileElves.every(e => e.knocked);
+                    if (allKnocked && !room.gunPickup) {
+                        this.storyPhase = 'gun_found';
+                        room.gunPickup = { x: 540, y: 350 };
+                        this.showDialogue('santa', 'SANTA CLAUS', '🎅', "¿Qué es esto...? ¿Una <strong>pistola de metal</strong> escondida entre los dulces?");
+                        document.getElementById('status-display').innerText = 'RECOGE LA PISTOLA MISTERIOSA DEL SUELO';
+                    }
+                }
+
+                // RECOGER PISTOLA
+                if (this.storyPhase === 'gun_found' && room.gunPickup) {
+                    if (Math.hypot(room.gunPickup.x - this.player.x, room.gunPickup.y - this.player.y) < 55) {
+                        room.gunPickup = null;
+                        this.player.weapon = 'gun';
+                        document.getElementById('weapon-ico').innerText = '🔫';
+                        document.getElementById('weapon-title').innerText = 'PISTOLA DE METAL';
+                        document.getElementById('weapon-sub').innerText = 'CLIC: DISPARAR';
+                        this.sound.playSparkleSound();
+
+                        room.hostileElves.push({ id: 99, x: 540, y: 200, hp: 100, state: 'hostile', knocked: false, isBoss: true });
+                        this.showDialogue('evil', 'LÍDER REBELDE', '👹', "¡No te atreverás a dispararme, viejo tonto!");
+                        document.getElementById('status-display').innerText = 'DEFIÉNDETE DEL LÍDER REBELDE';
+                    }
+                }
+
+                // IA de hostiles
+                if (room.hostileElves) {
+                    room.hostileElves.forEach(elf => {
+                        if (elf.knocked || elf.state !== 'hostile') return;
+                        const dist = Math.hypot(this.player.x - elf.x, this.player.y - elf.y);
+                        if (dist > 35) {
+                            const ang = Math.atan2(this.player.y - elf.y, this.player.x - elf.x);
+                            elf.x += Math.cos(ang) * 2.5;
+                            elf.y += Math.sin(ang) * 2.5;
+                        }
+                    });
+                }
+            }
+
+            // Los elfos malignos salen corriendo CADA UNO A OTRA SALA:
+            // Uno huye al Taller Central (1,1) y otro al Almacén Oeste (0,1)
+            scatterRebels() {
+                const north = this.rooms['1,0'];
+                north.rebels = []; // Salen de la sala norte
+
+                this.rooms['1,1'].rebels.push({ id: 0, x: 400, y: 460, name: 'Bribón', emoji: '😈', captured: false });
+                this.rooms['0,1'].rebels.push({ id: 1, x: 500, y: 300, name: 'Trasto', emoji: '😈', captured: false });
+
+                // Abrir paso a la sala oeste
+                this.rooms['1,1'].lockedDoors.left = false;
+                document.getElementById('map-0-1').classList.remove('locked');
+
+                this.storyPhase = 'hunt_single_rebel';
+                document.getElementById('status-display').innerText = '¡BUSCA A UN ELFO Y ATRÁPALO!';
+                this.showDialogue('santa', 'SANTA CLAUS', '🎅', "¡Han salido corriendo a las otras salas! <span class=\"highlight\">Debo capturarlos uno a uno y llevárselos al Doctor</span>.");
+            }
+
+            // Interacción tecla 'E' para dejar al elfo que Santa lleva en brazos en la cabina
+            handleInteractionE() {
+                const room = this.getCurrentRoom();
+                if (this.currentRoomX === 1 && this.currentRoomY === 0 && this.storyPhase === 'carry_to_doctor' && this.player.carryingRebel) {
+                    room.cabins.forEach(cab => {
+                        if (Math.hypot(cab.x + cab.w/2 - this.player.x, cab.y + cab.h/2 - this.player.y) < 110) {
+                            cab.elfCount++;
+                            this.rebelsDelivered++;
+                            const deliveredName = this.player.carryingRebel.name;
+                            this.player.carryingRebel = null; // Ya no lleva elfo
+
+                            this.sound.playSparkleSound();
+                            this.createSparkles(cab.x + cab.w/2, cab.y + cab.h/2, '#48cae4', 25);
+                            document.getElementById('weapon-sub').innerText = `ENTREGADOS: ${this.rebelsDelivered} / ${this.totalRebels}`;
+
+                            if (this.rebelsDelivered >= this.totalRebels) {
+                                this.storyPhase = 'all_delivered_done';
+                                this.showDialogue('doctor', 'DR. VALERIANO', '🧑‍⚕️', "Excelente trabajo, Santa. Ahora que están todos aquí los pondré bajo <em>\"tratamiento profundo\"</em> en estas cabinas... ji, ji, ji.");
+                                document.getElementById('status-display').innerText = 'SAL DEL CENTRO DE REACONDICIONAMIENTO';
+                            } else {
+                                this.storyPhase = 'hunt_single_rebel';
+                                this.showDialogue('doctor', 'DR. VALERIANO', '🧑‍⚕️', `Bien hecho. Dejo a ${deliveredName} en la cápsula. ¡Ve a por el siguiente elfo travieso que falta!`);
+                                document.getElementById('status-display').innerText = '¡BUSCA AL SIGUIENTE ELFO Y ATRÁPALO!';
+                            }
+                        }
+                    });
+                }
+            }
+
+            handlePlayerAttack() {
+                if (!this.player.weapon || this.player.attackCooldown > 0) return;
+                const room = this.getCurrentRoom();
+
+                // MELEE AMIGABLE (NOQUEO SIN SANGRE)
+                if (this.player.weapon === 'candy_cane' || this.player.weapon === 'lollipop') {
+                    this.player.attackCooldown = 0.35;
+                    this.player.swingAnim = 1.0;
+                    this.sound.playWhackSound();
+
+                    if (room.hostileElves) {
+                        room.hostileElves.forEach(elf => {
+                            if (!elf.knocked && Math.hypot(elf.x - this.player.x, elf.y - this.player.y) < 75) {
+                                elf.hp -= 35;
+                                this.createSparkles(elf.x, elf.y, '#ffd166', 15);
+                                if (elf.hp <= 0) {
+                                    elf.knocked = true; // Noqueado en el suelo SIN SANGRE
+                                    this.sound.playWhackSound();
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // DISPARO DE PISTOLA -> ¡DESTRUCCIÓN GORE TOTAL!
+                else if (this.player.weapon === 'gun') {
+                    this.player.attackCooldown = 0.45;
+                    this.sound.playGunshot();
+                    this.triggerScreenFlash();
+
+                    if (room.hostileElves) {
+                        for (let i = room.hostileElves.length - 1; i >= 0; i--) {
+                            const elf = room.hostileElves[i];
+                            if (!elf.knocked) {
+                                const d = Math.hypot(elf.x - this.player.x, elf.y - this.player.y);
+                                if (d < 380) {
+                                    this.triggerGoreExplosion(elf.x, elf.y);
+                                    room.hostileElves.splice(i, 1);
+
+                                    document.getElementById('game-container').classList.add('horror-active');
+                                    this.sound.isHorrorMusic = true;
+                                    document.getElementById('status-display').innerText = '🩸 ¡LA PESADILLA SE DESATA!';
+                                    this.showDialogue('santa', 'SANTA CLAUS', '😨', "¡DIOS MÍO! ¡¿QUÉ HE HECHO?! ¡¿QUÉ CLASE DE ARMA ES ESTA?!");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            triggerGoreExplosion(x, y) {
+                this.sound.playGoreExplosion();
+
+                for (let i = 0; i < 90; i++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    const spd = 3 + Math.random() * 11;
+                    this.bloodParticles.push({
+                        x, y,
+                        vx: Math.cos(ang) * spd,
+                        vy: Math.sin(ang) * spd,
+                        r: 2.5 + Math.random() * 4,
+                        color: (Math.random() > 0.4) ? '#b00020' : '#e60026',
+                        life: 0.2 + Math.random() * 0.35
+                    });
+                }
+
+                for (let k = 0; k < 12; k++) {
+                    this.bloodSplats.push({
+                        x: x + (Math.random() - 0.5) * 80,
+                        y: y + (Math.random() - 0.5) * 80,
+                        r: 16 + Math.random() * 26,
+                        color: (Math.random() > 0.5) ? '#660012' : '#8a0319'
+                    });
+                }
+            }
+
+            createSparkles(x, y, color, count) {
+                for (let i = 0; i < count; i++) {
+                    const a = Math.random() * Math.PI * 2;
+                    const sp = 0.5 + Math.random() * 2.8;
+                    this.sparkles.push({
+                        x, y,
+                        vx: Math.cos(a) * sp,
+                        vy: Math.sin(a) * sp - 0.6,
+                        color,
+                        radius: 2 + Math.random() * 3.5,
+                        life: 0.5 + Math.random() * 0.45
+                    });
+                }
+            }
+
+            drawRoundedRect(ctx, x, y, w, h, r) {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w - r, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                ctx.lineTo(x + w, y + h - r);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                ctx.lineTo(x + r, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+                ctx.closePath();
+            }
+
+            transitionRoom(dx, dy, doorSide) {
+                const cur = this.getCurrentRoom();
+                if (cur.lockedDoors && cur.lockedDoors[doorSide]) {
+                    this.showDialogue('santa', 'SANTA CLAUS', '🎅', "¡La puerta está cerrada con candado! Revisa los regalos para encontrar la llave...");
+                    return;
+                }
+
+                const tx = this.currentRoomX + dx;
+                const ty = this.currentRoomY + dy;
+                if (this.rooms[`${tx},${ty}`]) {
+                    this.currentRoomX = tx;
+                    this.currentRoomY = ty;
+                    if (doorSide === 'top') this.player.y = this.H - 120;
+                    else if (doorSide === 'bottom') this.player.y = 120;
+                    else if (doorSide === 'left') this.player.x = this.W - 120;
+                    else if (doorSide === 'right') this.player.x = 120;
+                    this.updateMinimap();
+                }
+            }
+
+            /* --- RENDERIZADO 2.5D --- */
+            render() {
+                const ctx = this.ctx;
+                const room = this.getCurrentRoom();
+
+                ctx.save();
+                ctx.clearRect(0, 0, this.W, this.H);
+
+                this.renderRoomStructure(ctx, room);
+
+                // Sangre permanente
+                this.bloodSplats.forEach(b => {
+                    ctx.fillStyle = b.color;
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // Ordenar en profundidad Y-Sorting
+                const queue = [];
+
+                if (room.furniture) room.furniture.forEach(f => queue.push({ y: f.y + f.h, type: 'furniture', obj: f }));
+                if (room.cabins) room.cabins.forEach(c => queue.push({ y: c.y + c.h, type: 'cabin', obj: c }));
+                if (room.candyDecor) room.candyDecor.forEach(d => queue.push({ y: d.y + 40, type: 'candyDecor', obj: d }));
+                if (room.candyWeapons) room.candyWeapons.forEach(w => queue.push({ y: w.y, type: 'candyWeapon', obj: w }));
+                if (room.gunPickup) queue.push({ y: room.gunPickup.y, type: 'gunPickup', obj: room.gunPickup });
+                if (room.gifts) room.gifts.forEach(g => queue.push({ y: g.y, type: 'gift', obj: g }));
+                if (room.elves) room.elves.forEach(e => queue.push({ y: e.y + 10, type: 'elf', obj: e }));
+                if (room.rebels) room.rebels.forEach(r => { if (!r.captured) queue.push({ y: r.y + 10, type: 'rebel', obj: r }); });
+                if (room.doctor) queue.push({ y: room.doctor.y + 10, type: 'doctor', obj: room.doctor });
+                if (room.hostileElves) room.hostileElves.forEach(he => queue.push({ y: he.y + 10, type: 'hostileElf', obj: he }));
+
+                queue.push({ y: this.player.y + 12, type: 'player', obj: this.player });
+
+                queue.sort((a, b) => a.y - b.y);
+
+                queue.forEach(item => {
+                    if (item.type === 'furniture') this.render3DFurniture(ctx, item.obj);
+                    else if (item.type === 'cabin') this.render3DCabin(ctx, item.obj);
+                    else if (item.type === 'candyDecor') this.render3DCandyDecor(ctx, item.obj);
+                    else if (item.type === 'candyWeapon') this.render3DWeaponPickup(ctx, item.obj);
+                    else if (item.type === 'gunPickup') this.render3DGunPickup(ctx, item.obj);
+                    else if (item.type === 'gift') this.render3DGift(ctx, item.obj);
+                    else if (item.type === 'elf') this.render3DElf(ctx, item.obj);
+                    else if (item.type === 'rebel') this.render3DRebel(ctx, item.obj);
+                    else if (item.type === 'doctor') this.render3DDoctor(ctx, item.obj);
+                    else if (item.type === 'hostileElf') this.render3DHostileElf(ctx, item.obj);
+                    else if (item.type === 'player') this.renderSantaFrontal(ctx, item.obj);
+                });
+
+                this.bloodParticles.forEach(bp => {
+                    ctx.fillStyle = bp.color;
+                    ctx.beginPath();
+                    ctx.arc(bp.x, bp.y, bp.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                this.renderParticles(ctx);
+
+                ctx.restore();
+            }
+
+            renderRoomStructure(ctx, room) {
+                if (room.theme === 'candy_kingdom') ctx.fillStyle = '#fff0f3';
+                else if (room.theme === 'clinic_room') ctx.fillStyle = '#eaf4f8';
+                else ctx.fillStyle = '#fff8f0';
+
+                ctx.fillRect(0, 0, this.W, this.H);
+
+                ctx.strokeStyle = (room.theme === 'candy_kingdom') ? '#ffccd5' : '#fae1dd';
+                ctx.lineWidth = 2;
+                for (let x = 70; x < this.W - 70; x += 65) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 70);
+                    ctx.lineTo(x, this.H - 70);
+                    ctx.stroke();
+                }
+
+                const wt = 65;
+                ctx.fillStyle = (room.theme === 'candy_kingdom') ? '#ffb3c6' : (room.theme === 'clinic_room') ? '#bde0fe' : '#f8d7da';
+                ctx.fillRect(0, 0, this.W, wt);
+                ctx.fillRect(0, 0, wt, this.H);
+                ctx.fillRect(0, this.H - wt, this.W, wt);
+                ctx.fillRect(this.W - wt, 0, wt, this.H);
+
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(wt, wt, this.W - wt * 2, this.H - wt * 2);
+
+                const dw = 110, cx = this.W / 2, cy = this.H / 2;
+                if (room.doors.top) this.renderDoor(ctx, cx - dw/2, 10, dw, wt - 5, room.lockedDoors.top);
+                if (room.doors.bottom) this.renderDoor(ctx, cx - dw/2, this.H - wt - 5, dw, wt - 5, room.lockedDoors.bottom);
+                if (room.doors.left) this.renderDoor(ctx, 10, cy - dw/2, wt - 5, dw, room.lockedDoors.left);
+                if (room.doors.right) this.renderDoor(ctx, this.W - wt - 5, cy - dw/2, wt - 5, dw, room.lockedDoors.right);
+            }
+
+            renderDoor(ctx, x, y, w, h, isLocked) {
+                ctx.save();
+                ctx.fillStyle = isLocked ? '#e07a5f' : '#2ec4b6';
+                this.drawRoundedRect(ctx, x, y, w, h, 12);
+                ctx.fill();
+                ctx.fillStyle = isLocked ? '#9d0208' : '#1b4332';
+                this.drawRoundedRect(ctx, x + 8, y + 8, w - 16, h - 16, 8);
+                ctx.fill();
+                ctx.font = '20px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(isLocked ? '🔒' : '✨', x + w/2, y + h/2);
+                ctx.restore();
+            }
+
+            render3DFurniture(ctx, f) {
+                ctx.save();
+                const d = f.depth || 28;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+                this.drawRoundedRect(ctx, f.x - 6, f.y + d - 4, f.w + 12, f.h, 14);
+                ctx.fill();
+
+                ctx.fillStyle = '#e8c4b8';
+                this.drawRoundedRect(ctx, f.x, f.y + f.h - 15, f.w, d + 15, 12);
+                ctx.fill();
+
+                ctx.fillStyle = (f.type === 'medical_desk') ? '#caf0f8' : (f.type === 'confection_table') ? '#ffccd5' : '#fae1dd';
+                this.drawRoundedRect(ctx, f.x, f.y, f.w, f.h, 14);
+                ctx.fill();
+
+                ctx.fillStyle = '#6b4c59';
+                ctx.font = 'bold 13px Quicksand';
+                ctx.textAlign = 'center';
+                ctx.fillText(f.title, f.x + f.w/2, f.y + 24);
+                ctx.restore();
+            }
+
+            render3DCabin(ctx, c) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                this.drawRoundedRect(ctx, c.x - 5, c.y + 10, c.w + 10, c.h, 16);
+                ctx.fill();
+
+                ctx.fillStyle = '#bde0fe';
+                this.drawRoundedRect(ctx, c.x, c.y, c.w, c.h, 18);
+                ctx.fill();
+                ctx.strokeStyle = '#0077b6';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                ctx.fillStyle = 'rgba(202, 240, 248, 0.75)';
+                this.drawRoundedRect(ctx, c.x + 12, c.y + 16, c.w - 24, c.h - 40, 12);
+                ctx.fill();
+
+                if (c.elfCount > 0) {
+                    ctx.font = '28px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🧝', c.x + c.w/2, c.y + c.h/2);
+                }
+
+                ctx.font = 'bold 12px Fredoka One';
+                ctx.fillStyle = '#0077b6';
+                ctx.textAlign = 'center';
+                ctx.fillText(c.label, c.x + c.w/2, c.y - 10);
+
+                // Si Santa lleva un elfo en brazos y está cerca de la cabina
+                if (this.player.carryingRebel && Math.hypot(c.x + c.w/2 - this.player.x, c.y + c.h/2 - this.player.y) < 110) {
+                    ctx.fillStyle = '#ff0055';
+                    ctx.font = 'bold 13px Fredoka One';
+                    ctx.fillText('PULSA [E] DEJAR ELFO', c.x + c.w/2, c.y + c.h + 20);
+                }
+
+                ctx.restore();
+            }
+
+            render3DCandyDecor(ctx, d) {
+                ctx.save();
+                ctx.font = '54px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                if (d.type === 'giant_cane') ctx.fillText('🍭', d.x, d.y);
+                else ctx.fillText('🍬', d.x, d.y);
+                ctx.restore();
+            }
+
+            render3DWeaponPickup(ctx, w) {
+                ctx.save();
+                ctx.translate(w.x, w.y);
+                const bounce = Math.sin(performance.now() * 0.006) * 6;
+                ctx.font = '36px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(w.icon, 0, bounce);
+                ctx.font = 'bold 11px Fredoka One';
+                ctx.fillStyle = '#ff5c8a';
+                ctx.fillText(w.name, 0, bounce - 26);
+                ctx.restore();
+            }
+
+            render3DGunPickup(ctx, g) {
+                ctx.save();
+                ctx.translate(g.x, g.y);
+                const bounce = Math.sin(performance.now() * 0.008) * 5;
+                ctx.font = '36px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🔫', 0, bounce);
+                ctx.font = 'bold 12px Fredoka One';
+                ctx.fillStyle = '#d90429';
+                ctx.fillText('¡PISTOLA MISTERIOSA!', 0, bounce - 28);
+                ctx.restore();
+            }
+
+            render3DGift(ctx, g) {
+                ctx.save();
+                ctx.translate(g.x, g.y);
+                const s = 38, h = 18;
+                ctx.fillStyle = 'rgba(0,0,0,0.14)';
+                ctx.beginPath();
+                ctx.ellipse(0, 14, 24, 10, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = g.color;
+                this.drawRoundedRect(ctx, -s/2, -s/2, s, s, 6);
+                ctx.fill();
+
+                ctx.fillStyle = g.ribbon;
+                ctx.fillRect(-s/2, -4, s, 8);
+                ctx.fillRect(-4, -s/2, 8, s);
+
+                if (g.inspected) {
+                    ctx.font = '18px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('⭐', 0, -35);
+                } else {
+                    ctx.font = 'bold 11px Quicksand';
+                    ctx.fillStyle = '#ff5c8a';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(g.dropsKey ? '¡LLAVE!' : 'REVISAR', 0, 36);
+                }
+                ctx.restore();
+            }
+
+            render3DElf(ctx, e) {
+                ctx.save();
+                ctx.translate(e.x, e.y);
+                const bounce = Math.sin(performance.now() * 0.003) * 4;
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.beginPath();
+                ctx.ellipse(0, 16, 18, 8, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = e.coatColor;
+                ctx.beginPath();
+                ctx.ellipse(0, bounce + 2, 16, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffe5d9';
+                ctx.beginPath();
+                ctx.arc(0, bounce - 8, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#222';
+                ctx.beginPath();
+                ctx.arc(-4, bounce - 9, 2.5, 0, Math.PI * 2);
+                ctx.arc(4, bounce - 9, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = e.hatColor;
+                ctx.beginPath();
+                ctx.moveTo(-11, bounce - 14);
+                ctx.lineTo(3, bounce - 32);
+                ctx.lineTo(11, bounce - 14);
+                ctx.fill();
+
+                ctx.font = 'bold 12px Quicksand';
+                ctx.fillStyle = '#5c3c78';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${e.name} ✨`, 0, bounce - 38);
+                ctx.restore();
+            }
+
+            render3DRebel(ctx, r) {
+                ctx.save();
+                ctx.translate(r.x, r.y);
+                const runCycle = Math.sin(performance.now() * 0.02) * 6;
+                ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                ctx.beginPath();
+                ctx.ellipse(0, 16, 20, 9, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#ff9f1c';
+                ctx.beginPath();
+                ctx.ellipse(0, runCycle + 2, 17, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffe5d9';
+                ctx.beginPath();
+                ctx.arc(0, runCycle - 8, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#d90429';
+                ctx.beginPath();
+                ctx.arc(-5, runCycle - 9, 3, 0, Math.PI * 2);
+                ctx.arc(5, runCycle - 9, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#7209b7';
+                ctx.beginPath();
+                ctx.moveTo(-11, runCycle - 14);
+                ctx.lineTo(8, runCycle - 34);
+                ctx.lineTo(11, runCycle - 14);
+                ctx.fill();
+
+                ctx.font = 'bold 12px Fredoka One';
+                ctx.fillStyle = '#d90429';
+                ctx.textAlign = 'center';
+                ctx.fillText(`¡${r.name}! 😈`, 0, runCycle - 40);
+                ctx.restore();
+            }
+
+            render3DDoctor(ctx, doc) {
+                ctx.save();
+                ctx.translate(doc.x, doc.y);
+                ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                ctx.beginPath();
+                ctx.ellipse(0, 18, 22, 10, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.ellipse(0, 2, 20, 18, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#0077b6';
+                ctx.fillRect(-3, -12, 6, 30);
+
+                ctx.fillStyle = '#ffe5d9';
+                ctx.beginPath();
+                ctx.arc(0, -9, 13, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.font = '30px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('🧑‍⚕️', 0, -8);
+
+                ctx.font = 'bold 13px Fredoka One';
+                ctx.fillStyle = '#0077b6';
+                ctx.fillText(doc.name, 0, -42);
+                ctx.restore();
+            }
+
+            render3DHostileElf(ctx, elf) {
+                ctx.save();
+                ctx.translate(elf.x, elf.y);
+
+                if (elf.knocked) {
+                    ctx.rotate(Math.PI / 2);
+                    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 18, 12, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#6c757d';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 15, 13, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.font = '16px sans-serif';
+                    ctx.fillText('💫', 0, -18);
+                    ctx.restore();
+                    return;
+                }
+
+                const run = Math.sin(performance.now() * 0.015) * 5;
+                ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                ctx.beginPath();
+                ctx.ellipse(0, 16, 20, 9, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = elf.isBoss ? '#9d0208' : '#e63946';
+                ctx.beginPath();
+                ctx.ellipse(0, run + 2, 17, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffe5d9';
+                ctx.beginPath();
+                ctx.arc(0, run - 8, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#d90429';
+                ctx.beginPath();
+                ctx.arc(-5, run - 9, 3, 0, Math.PI * 2);
+                ctx.arc(5, run - 9, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.font = 'bold 12px Fredoka One';
+                ctx.fillStyle = '#d90429';
+                ctx.textAlign = 'center';
+                ctx.fillText(elf.isBoss ? '¡LÍDER! 👺' : '¡AMOTINADO! 💢', 0, run - 38);
+                ctx.restore();
+            }
+
+            /* --- SANTA CLAUS VISTO DE FRENTE (FRONT VIEW 2.5D) --- */
+            renderSantaFrontal(ctx, p) {
+                ctx.save();
+                ctx.translate(p.x, p.y - p.bounce);
+
+                const legWiggle = Math.sin(p.walkCycle) * 6;
+
+                // Sombra de contacto
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.beginPath();
+                ctx.ellipse(0, 18 + p.bounce, 26, 11, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 1. Botas negras vistas de frente
+                ctx.fillStyle = '#1e2029';
+                this.drawRoundedRect(ctx, -14, 10 + legWiggle, 11, 14, 3);
+                this.drawRoundedRect(ctx, 3, 10 - legWiggle, 11, 14, 3);
+                ctx.fill();
+
+                // 2. Traje de terciopelo rojo mullido (Cuerpo frontal)
+                const bodyGrad = ctx.createLinearGradient(0, -18, 0, 14);
+                bodyGrad.addColorStop(0, '#ff4d6d');
+                bodyGrad.addColorStop(1, '#d90429');
+                ctx.fillStyle = bodyGrad;
+                this.drawRoundedRect(ctx, -22, -18, 44, 32, 14);
+                ctx.fill();
+
+                // 3. Cinturón negro con hebilla dorada
+                ctx.fillStyle = '#111317';
+                ctx.fillRect(-22, -2, 44, 8);
+
+                ctx.fillStyle = '#ffd166';
+                this.drawRoundedRect(ctx, -6, -4, 12, 12, 2);
+                ctx.fill();
+                ctx.fillStyle = '#111317';
+                ctx.fillRect(-3, -1, 6, 6);
+
+                // 4. Barba blanca esponjosa frontal
+                ctx.fillStyle = '#f8f9fa';
+                ctx.beginPath();
+                ctx.moveTo(-16, -14);
+                ctx.quadraticCurveTo(-18, 4, 0, 12);
+                ctx.quadraticCurveTo(18, 4, 16, -14);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(-8, -4, 6, 0, Math.PI * 2);
+                ctx.arc(8, -4, 6, 0, Math.PI * 2);
+                ctx.arc(0, 0, 7, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 5. Cara y mejillas rosadas
+                ctx.fillStyle = '#ffe5d9';
+                ctx.beginPath();
+                ctx.arc(0, -16, 13, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#ff758f';
+                ctx.beginPath();
+                ctx.arc(0, -14, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#222';
+                ctx.beginPath();
+                ctx.arc(-5, -18, 2.2, 0, Math.PI * 2);
+                ctx.arc(5, -18, 2.2, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(-7, -22, 5, 2.5);
+                ctx.fillRect(2, -22, 5, 2.5);
+
+                // 6. Gorro navideño frontal caído a un lado
+                ctx.fillStyle = '#d90429';
+                ctx.beginPath();
+                ctx.moveTo(-14, -22);
+                ctx.lineTo(16, -22);
+                ctx.quadraticCurveTo(24, -28, 20, -38);
+                ctx.lineTo(-4, -34);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffffff';
+                this.drawRoundedRect(ctx, -16, -26, 32, 7, 3);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(22, -36, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 7. Si Santa lleva un elfo en brazos (Transportándolo al doctor)
+                if (p.carryingRebel) {
+                    ctx.font = '22px sans-serif';
+                    ctx.textAlign = 'center';
+                    // Dibujar el emoji del elfo ligeramente arriba del cuerpo
+                    ctx.fillText(p.carryingRebel.emoji, 0, -30);
+                }
+
+                // 8. Manos con guantes blancos y arma empuñada
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(-22, 0, 5, 0, Math.PI * 2);
+                ctx.arc(22, 0 + Math.sin(p.swingAnim * Math.PI) * 14, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.save();
+                ctx.translate(22, 0 + Math.sin(p.swingAnim * Math.PI) * 14);
+                if (p.weapon === 'candy_cane') {
+                    ctx.rotate(p.swingAnim * 1.5 - 0.2);
+                    ctx.font = '24px sans-serif';
+                    ctx.fillText('🍭', 0, -8);
+                } else if (p.weapon === 'lollipop') {
+                    ctx.rotate(p.swingAnim * 1.5 - 0.2);
+                    ctx.font = '26px sans-serif';
+                    ctx.fillText('🍭', 0, -8);
+                } else if (p.weapon === 'gun') {
+                    ctx.font = '24px sans-serif';
+                    ctx.fillText('🔫', 0, -4);
+                }
+                ctx.restore();
+
+                ctx.restore();
+            }
+
+            renderParticles(ctx) {
+                ctx.fillStyle = '#ffffff';
+                for (let i = 0; i < this.snowflakes.length; i++) {
+                    const s = this.snowflakes[i];
+                    ctx.globalAlpha = s.alpha;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1.0;
+
+                this.sparkles.forEach(p => {
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            window.game = new GameStoryEngine();
+        });
+    </script>
+</body>
+</html>
