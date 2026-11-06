@@ -3,6 +3,47 @@
 
 ---
 
+## 📅 Versión 2.1.0 — Corazón Animado con Vaciado Dinámico, Temblor de Pantalla y Tensión Oscura
+*Fecha: 06 de Noviembre, 2026*
+
+### 💖 Corazón de Vitalidad SVG con Animación Fluida
+- Se sustituyó la barra tradicional por un **gran corazón esculpido en SVG** con brillo y degradado de rubí a sangre profunda (`#ff758f` ➜ `#d90429` ➜ `#720026`).
+- **Vaciado Progresivo:** Al recibir daño, el corazón se vacía suavemente de arriba hacia abajo mediante máscara de recorte animada (`clip-height`).
+- **Latido y Pánico Dinámico:**
+  - Con salud normal late de forma rítmica y suave (`heart-pulse`).
+  - Al bajar del 40% de salud entra en **modo pánico frenético** (`heart-panic`) palpitando aceleradamente con brillo rojo de emergencia.
+
+### 📳 Temblor de Pantalla Proporcional al Daño (Screen Shake)
+- Cuanta menos vida tiene Santa, **más tiembla el encuadre de la cámara** en tiempo real (`ctx.translate(shakeX, shakeY)`).
+- El temblor escala dinámicamente desde una ligera vibración hasta un terremoto desorientador cuando la vida roza el peligro crítico.
+
+### 🌑 Viñeta de Tensión y Oscurecimiento Periférico
+- Se incorporó la capa `#tension-vignette` con sombras y destellos sangrientos que oscurecen los bordes de la pantalla.
+- La intensidad del oscurecimiento aumenta en paralelo a la pérdida de salud, sumergiendo al jugador en una atmósfera claustrofóbica y de pura supervivencia.
+
+---
+
+## 📅 Versión 2.0.0 — ¡Inicio del ACTO 2! Animación de Golpeo, Balas Visibles, Plan Secreto y Barra de Vida
+*Fecha: 06 de Noviembre, 2026*
+
+### ⚔️ Animación de Ataque & Apuntado Realista
+- **Animación Melee Dinámica:** El ataque con bastón/piruleta ahora genera un barrido arqueado agresivo de 2.2 radianes acompañado de una estela de chispas en semicírculo hacia donde Santa está mirando.
+- **Pistola Orientada al Frente:** La pistola ya no apunta hacia el jugador; su cañón y boca de fuego se orientan exactamente hacia la dirección de movimiento y mirada de Santa (perfil, frente o arriba) con retroceso visual y destello de cañón (*muzzle flash*).
+- **Proyectiles Visibles:** Los disparos ahora lanzan **balas doradas brillantes reales** con iluminación, estela de chispas y colisiones precisas con paredes y enemigos.
+
+### 📜 La Caja del Plan Secreto & Lectura Animada
+- Tras noquear a los elfos insurrectos en el Taller de Golosinas, aparece una **caja de madera con herrajes dorados y un pergamino brillante**.
+- Al interactuar con la caja, se despliega una ventana animada de papiro antiguo con el texto del complot:
+  > *"Los elfos se han rebelado... hay que 'educarlos' por la fuerza. Hemos escondido la verdadera arma de fuego en el Almacén de Cajas (Sala Oeste)..."*
+- Al cerrar el plan, se activa la nueva misión: **Ir a la Sala Oeste a por la pistola**.
+
+### 🩸 Despliegue del ACTO 2, Barra de Vida e Inventario de Armas
+- **Barra de Vitalidad de Santa:** Se añadió una barra de salud en el HUD superior (`❤️ VITALIDAD DE SANTA`) que responde al daño en combate.
+- **Selector de Armas en el HUD:** Muestra las armas desbloqueadas en ranuras (`[1] 🍭 MELEE`, `[2] 🔫 PISTOLA`) con soporte para alternar con teclas numéricas `[1]` y `[2]` o haciendo clic.
+- **Transición al ACTO 2:** Al incautar la pistola en el Almacén Oeste, se desata el ACTO 2 con atmósfera de terror, música oscura y patrullas de elfos hostiles en todas las salas a las que Santa debe enfrentarse y purificar.
+
+---
+
 ## 📅 Versión 1.9.0 — Corrección de Puerta en Sala Médica & Remasterización de Elementos 3D
 *Fecha: 05 de Noviembre, 2026*
 

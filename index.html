@@ -117,6 +117,185 @@
             color: #8338ec;
         }
 
+        /* Barra de Vida Corazón Animado & Tension FX */
+        .heart-health-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 2px;
+        }
+        .heart-container {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            filter: drop-shadow(0 0 8px rgba(255, 0, 84, 0.6));
+            animation: heart-pulse 1.2s infinite ease-in-out;
+            transition: transform 0.2s;
+        }
+        .heart-container.low-health {
+            animation: heart-panic 0.35s infinite ease-in-out;
+            filter: drop-shadow(0 0 14px rgba(255, 0, 40, 0.9));
+        }
+        .heart-bg-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            fill: rgba(0, 0, 0, 0.2);
+            stroke: #ff4d6d;
+            stroke-width: 2;
+        }
+        .heart-fill-clip {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            transition: height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .heart-fg-svg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 38px;
+            height: 38px;
+            fill: url(#heart-grad);
+        }
+        .heart-val-text {
+            font-family: 'Fredoka One', cursive;
+            font-size: 15px;
+            color: #d90429;
+            letter-spacing: 0.5px;
+        }
+        @keyframes heart-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        @keyframes heart-panic {
+            0%, 100% { transform: scale(1) rotate(-3deg); }
+            50% { transform: scale(1.22) rotate(3deg); }
+        }
+
+        /* Capa de Tensión & Oscurecimiento Sangriento */
+        #tension-vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 45;
+            opacity: 0;
+            box-shadow: inset 0 0 160px rgba(0, 0, 0, 0.95), inset 0 0 90px rgba(180, 0, 30, 0.6);
+            transition: opacity 0.4s ease;
+        }
+        .weapon-slot-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .weapon-slot {
+            padding: 4px 10px;
+            background: rgba(0,0,0,0.06);
+            border: 2px solid #adb5bd;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            color: #495057;
+            transition: all 0.2s;
+        }
+        .weapon-slot.active {
+            background: #ffccd5;
+            border-color: #ff3366;
+            color: #9d0208;
+            box-shadow: 0 0 8px rgba(255, 51, 102, 0.5);
+            transform: scale(1.04);
+        }
+        .horror-active .weapon-slot.active {
+            background: #6a040f;
+            border-color: #d90429;
+            color: #fff;
+        }
+
+        /* Modal de Lectura de Plan Secreto */
+        #plan-letter-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(15, 5, 20, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 120;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        #plan-letter-modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .parchment-card {
+            background: #fefae0;
+            border: 6px solid #d4a373;
+            border-radius: 16px;
+            padding: 36px 45px;
+            max-width: 620px;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.7), inset 0 0 60px rgba(212, 163, 115, 0.35);
+            position: relative;
+            transform: rotate(-1.5deg) scale(0.9);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #3d2616;
+            font-family: 'Quicksand', sans-serif;
+        }
+        #plan-letter-modal.show .parchment-card {
+            transform: rotate(-0.5deg) scale(1);
+        }
+        .parchment-stamp {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 40px;
+            transform: rotate(15deg);
+        }
+        .parchment-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 26px;
+            color: #bc4749;
+            margin-bottom: 12px;
+            border-bottom: 2px dashed #d4a373;
+            padding-bottom: 8px;
+        }
+        .parchment-body {
+            font-size: 15px;
+            line-height: 1.6;
+            font-weight: 700;
+            color: #43281c;
+            margin-bottom: 22px;
+        }
+        .btn-parchment {
+            background: #bc4749;
+            color: #fff;
+            font-family: 'Fredoka One', cursive;
+            font-size: 17px;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(188, 71, 73, 0.4);
+            transition: transform 0.15s, background 0.15s;
+        }
+        .btn-parchment:hover {
+            transform: scale(1.05);
+            background: #9d0208;
+        }
+
         /* Minimapa 3x3 */
         .minimap-card {
             background: rgba(255, 255, 255, 0.95);
@@ -340,6 +519,7 @@
 <body>
     <div id="game-container">
         <canvas id="canvas"></canvas>
+        <div id="tension-vignette"></div>
         <div id="flash-screen"></div>
 
         <div id="ui-layer">
@@ -358,6 +538,46 @@
                         <div class="hud-content">
                             <div id="weapon-title" class="item-title">LLAVES DE SALA: 0</div>
                             <div id="weapon-sub" class="item-sub">ELFOS ATRAPADOS: 0 / 2</div>
+                        </div>
+                    </div>
+
+                    <!-- Corazón de Vitalidad de Santa con Animación Dinámica -->
+                    <div id="health-card" class="hud-card" style="display: none;">
+                        <div class="heart-health-wrapper">
+                            <div id="heart-anim-box" class="heart-container">
+                                <!-- SVG Fondo Transparente/Grisáceo -->
+                                <svg class="heart-bg-svg" viewBox="0 0 32 32">
+                                    <path d="M16 28 C16 28 3 19 3 10 C3 5 7 2 11.5 2 C14.3 2 15.5 3.5 16 4.5 C16.5 3.5 17.7 2 20.5 2 C25 2 29 5 29 10 C29 19 16 28 16 28 Z"/>
+                                </svg>
+                                <!-- Contenedor de Relleno que se Vacía de Arriba a Abajo -->
+                                <div id="heart-clip" class="heart-fill-clip" style="height: 100%;">
+                                    <svg class="heart-fg-svg" viewBox="0 0 32 32">
+                                        <defs>
+                                            <linearGradient id="heart-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" stop-color="#ff758f"/>
+                                                <stop offset="50%" stop-color="#d90429"/>
+                                                <stop offset="100%" stop-color="#720026"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <path d="M16 28 C16 28 3 19 3 10 C3 5 7 2 11.5 2 C14.3 2 15.5 3.5 16 4.5 C16.5 3.5 17.7 2 20.5 2 C25 2 29 5 29 10 C29 19 16 28 16 28 Z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="hud-content">
+                                <div class="act-title" style="color: #ff3366;">VITALIDAD</div>
+                                <div id="heart-value" class="heart-val-text">100 / 100 HP</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selector / Inventario de Armas -->
+                    <div id="weapon-selector-card" class="hud-card" style="display: none;">
+                        <div class="hud-content">
+                            <div class="act-title">ARMAS DISPONIBLES [1, 2]</div>
+                            <div id="weapon-slot-row" class="weapon-slot-row">
+                                <div id="slot-melee" class="weapon-slot active" onclick="window.game && window.game.selectWeaponSlot('melee')">🍭 MELEE</div>
+                                <div id="slot-gun" class="weapon-slot" onclick="window.game && window.game.selectWeaponSlot('gun')">🔫 PISTOLA</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -396,6 +616,20 @@
                     Revisa los regalos del taller con tus queridos artesanos. Abre la puerta del norte con la Llave Dorada. Cuando los elfos malignos escapen, <strong>captúralos uno a uno</strong> y llévalos en tus brazos con el Doctor al Centro de Reacondicionamiento.
                 </p>
                 <button id="btn-start" class="btn-kawaii">¡ENTRAR AL TALLER! 💖</button>
+            </div>
+        </div>
+
+        <!-- Modal de Lectura de Plan Secreto -->
+        <div id="plan-letter-modal">
+            <div class="parchment-card">
+                <div class="parchment-stamp">📜⚠️</div>
+                <h2 class="parchment-title">PLAN CONFIDENCIAL DE REBELIÓN</h2>
+                <div class="parchment-body">
+                    "Los elfos del taller nos hemos cansado de fabricar juguetes... ¡Nos hemos rebelado! Pero hay notas sobre cómo <em>\"educar\"</em> por la fuerza a los disidentes. Hemos escondido la verdadera arma de fuego en el <strong>Almacén de Cajas (Sala Oeste)</strong> para iniciar el golpe definitivo."
+                    <br><br>
+                    <span style="color: #bc4749; font-weight: 800;">👉 Misión: Ve de inmediato a la Sala Oeste para incautar la pistola y comenzar el ACTO 2.</span>
+                </div>
+                <button id="btn-close-plan" class="btn-parchment">¡IR AL ALMACÉN OESTE! 🔥</button>
             </div>
         </div>
     </div>
@@ -618,9 +852,15 @@
                     idleTime: 0,
                     carryingRebel: null, // Si lleva un elfo en brazos para llevarlo al doctor
                     weapon: null,
+                    inventory: [], // Armas desbloqueadas: ['candy_cane', 'gun']
                     attackCooldown: 0,
-                    swingAnim: 0
+                    swingAnim: 0,
+                    hp: 100,
+                    maxHp: 100
                 };
+
+                this.projectiles = []; // Balas en vuelo con estela brillante
+                this.planLetterFound = false;
 
                 /* ETAPAS:
                    1. 'gifts_review': En la primera sala, revisar los regalos y hablar con los elfos normales.
@@ -677,6 +917,13 @@
                         this.handleInteractionE();
                     }
 
+                    // Teclas numéricas 1 y 2 para cambio rápido de arma
+                    if (k === '1') {
+                        this.selectWeaponSlot('melee');
+                    } else if (k === '2') {
+                        this.selectWeaponSlot('gun');
+                    }
+
                     if (e.key === ' ' || e.code === 'Space') {
                         const m = document.getElementById('start-modal');
                         if (m.classList.contains('show')) this.startGame();
@@ -705,6 +952,70 @@
                 });
 
                 document.getElementById('btn-start').onclick = () => this.startGame();
+                document.getElementById('btn-close-plan').onclick = () => this.closePlanLetter();
+            }
+
+            selectWeaponSlot(slot) {
+                if (slot === 'melee' && (this.player.inventory.includes('candy_cane') || this.player.inventory.includes('lollipop') || this.player.weapon === 'candy_cane' || this.player.weapon === 'lollipop')) {
+                    this.player.weapon = this.player.inventory.includes('lollipop') ? 'lollipop' : 'candy_cane';
+                    this.updateWeaponUI();
+                    this.sound.playSparkleSound();
+                } else if (slot === 'gun' && this.player.inventory.includes('gun')) {
+                    this.player.weapon = 'gun';
+                    this.updateWeaponUI();
+                    this.sound.playSparkleSound();
+                }
+            }
+
+            updateWeaponUI() {
+                const slotMelee = document.getElementById('slot-melee');
+                const slotGun = document.getElementById('slot-gun');
+                if (slotMelee && slotGun) {
+                    slotMelee.classList.toggle('active', this.player.weapon === 'candy_cane' || this.player.weapon === 'lollipop');
+                    slotGun.classList.toggle('active', this.player.weapon === 'gun');
+                }
+
+                if (this.player.weapon === 'candy_cane') {
+                    document.getElementById('weapon-ico').innerText = '🍭';
+                    document.getElementById('weapon-title').innerText = 'BASTÓN DE CARAMELO';
+                    document.getElementById('weapon-sub').innerText = 'CLIC IZQ: BARRIDO MELEE';
+                } else if (this.player.weapon === 'lollipop') {
+                    document.getElementById('weapon-ico').innerText = '🍭';
+                    document.getElementById('weapon-title').innerText = 'PIRULETA GIGANTE';
+                    document.getElementById('weapon-sub').innerText = 'CLIC IZQ: GOLPE SÍSMICO';
+                } else if (this.player.weapon === 'gun') {
+                    document.getElementById('weapon-ico').innerText = '🔫';
+                    document.getElementById('weapon-title').innerText = 'PISTOLA DE METAL';
+                    document.getElementById('weapon-sub').innerText = 'CLIC: DISPARAR BALA';
+                }
+            }
+
+            updateHealthUI() {
+                const clip = document.getElementById('heart-clip');
+                const valText = document.getElementById('heart-value');
+                const animBox = document.getElementById('heart-anim-box');
+                const vignette = document.getElementById('tension-vignette');
+
+                const pct = Math.max(0, Math.min(100, (this.player.hp / this.player.maxHp) * 100));
+
+                if (clip) {
+                    // El corazón se vacía de arriba hacia abajo
+                    clip.style.height = `${pct}%`;
+                }
+                if (valText) {
+                    valText.innerText = `${Math.ceil(this.player.hp)} / ${this.player.maxHp} HP`;
+                }
+
+                if (animBox) {
+                    // Animación de pánico acelerada cuando la vida baja del 40%
+                    animBox.classList.toggle('low-health', pct <= 40);
+                }
+
+                if (vignette) {
+                    // Cuanto menos vida, más oscuro y sangriento se vuelve el borde de la pantalla
+                    const darkness = (1 - (pct / 100)) * 0.9;
+                    vignette.style.opacity = darkness.toFixed(2);
+                }
             }
 
             startGame() {
@@ -847,7 +1158,8 @@
                         { id: 1, x: 540, y: 220, hp: 60, state: 'idle', knocked: false },
                         { id: 2, x: 660, y: 240, hp: 60, state: 'idle', knocked: false }
                     ],
-                    gunPickup: null
+                    gunPickup: null,
+                    planChest: null
                 };
             }
 
@@ -982,6 +1294,50 @@
                     if (p.life <= 0) this.sparkles.splice(i, 1);
                 }
 
+                // Actualizar proyectiles (balas de pistola)
+                for (let i = this.projectiles.length - 1; i >= 0; i--) {
+                    const b = this.projectiles[i];
+                    b.x += b.vx;
+                    b.y += b.vy;
+                    b.life -= dt;
+
+                    // Estela dorada de la bala
+                    this.sparkles.push({
+                        x: b.x,
+                        y: b.y,
+                        vx: -b.vx * 0.1 + (Math.random() - 0.5) * 1.5,
+                        vy: -b.vy * 0.1 + (Math.random() - 0.5) * 1.5,
+                        color: '#ffd166',
+                        radius: 2.2,
+                        life: 0.18
+                    });
+
+                    // Colisión de bala con paredes
+                    if (b.x < 70 || b.x > this.W - 70 || b.y < 70 || b.y > this.H - 70 || b.life <= 0) {
+                        this.createSparkles(b.x, b.y, '#ffd166', 8);
+                        this.projectiles.splice(i, 1);
+                        continue;
+                    }
+
+                    // Colisión de bala con elfos hostiles
+                    if (room.hostileElves) {
+                        for (let j = room.hostileElves.length - 1; j >= 0; j--) {
+                            const elf = room.hostileElves[j];
+                            if (!elf.knocked && Math.hypot(elf.x - b.x, elf.y - b.y) < 28) {
+                                // ¡Impacto letal gore con pistola!
+                                this.triggerGoreExplosion(elf.x, elf.y);
+                                room.hostileElves.splice(j, 1);
+                                this.projectiles.splice(i, 1);
+
+                                document.getElementById('game-container').classList.add('horror-active');
+                                this.sound.isHorrorMusic = true;
+                                document.getElementById('status-display').innerText = '🩸 ¡ENEMIGO PURIFICADO!';
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 // -------------------------------------------------------------
                 // SECUENCIA DE PASOS EXACTA
                 // -------------------------------------------------------------
@@ -1112,9 +1468,8 @@
                     room.candyWeapons.forEach((w, idx) => {
                         if (Math.hypot(w.x - this.player.x, w.y - this.player.y) < 55) {
                             this.player.weapon = w.id;
-                            document.getElementById('weapon-ico').innerText = w.icon;
-                            document.getElementById('weapon-title').innerText = w.name.toUpperCase();
-                            document.getElementById('weapon-sub').innerText = 'CLIC IZQ: GOLPEAR (MELEE)';
+                            if (!this.player.inventory.includes(w.id)) this.player.inventory.push(w.id);
+                            this.updateWeaponUI();
                             this.sound.playSparkleSound();
                             room.candyWeapons.splice(idx, 1);
 
@@ -1127,30 +1482,44 @@
                     });
                 }
 
-                // PASO 7: SI TODOS NOQUEADOS -> APARECE LA PISTOLA
+                // PASO 7: TRAS NOQUEAR A LOS ELFOS -> APARECE LA CAJA CON EL PLAN SECRETO
                 if (this.storyPhase === 'candy_fight') {
                     const allKnocked = room.hostileElves.every(e => e.knocked);
-                    if (allKnocked && !room.gunPickup) {
-                        this.storyPhase = 'gun_found';
-                        room.gunPickup = { x: 540, y: 350 };
-                        this.showDialogue('santa', 'SANTA CLAUS', '🎅', "¿Qué es esto...? ¿Una <strong>pistola de metal</strong> escondida entre los dulces?");
-                        document.getElementById('status-display').innerText = 'RECOGE LA PISTOLA MISTERIOSA DEL SUELO';
+                    if (allKnocked && !room.planChest) {
+                        this.storyPhase = 'plan_chest_spawned';
+                        room.planChest = { x: 540, y: 350, opened: false };
+                        this.sound.playSparkleSound();
+                        this.createSparkles(540, 350, '#ffd166', 30);
+                        this.showDialogue('santa', 'SANTA CLAUS', '🎅', "¡Los rebeldes han caído! Pero espera... ¿Qué es esa <strong>caja misteriosa con un pergamino</strong> que se les ha caído?");
+                        document.getElementById('status-display').innerText = 'EXAMINA LA CAJA DEL PLAN SECRETO';
                     }
                 }
 
-                // RECOGER PISTOLA
-                if (this.storyPhase === 'gun_found' && room.gunPickup) {
-                    if (Math.hypot(room.gunPickup.x - this.player.x, room.gunPickup.y - this.player.y) < 55) {
+                // INTERACTUAR O ACERCARSE A LA CAJA DEL PLAN
+                if (this.storyPhase === 'plan_chest_spawned' && room.planChest && !room.planChest.opened) {
+                    if (Math.hypot(room.planChest.x - this.player.x, room.planChest.y - this.player.y) < 65) {
+                        room.planChest.opened = true;
+                        this.openPlanLetter();
+                    }
+                }
+
+                // RECOGER PISTOLA EN EL ALMACÉN OESTE (0,1)
+                if (this.currentRoomX === 0 && this.currentRoomY === 1 && this.storyPhase === 'go_to_warehouse_for_gun' && room.gunPickup) {
+                    if (Math.hypot(room.gunPickup.x - this.player.x, room.gunPickup.y - this.player.y) < 65) {
                         room.gunPickup = null;
+                        if (!this.player.inventory.includes('gun')) this.player.inventory.push('gun');
                         this.player.weapon = 'gun';
-                        document.getElementById('weapon-ico').innerText = '🔫';
-                        document.getElementById('weapon-title').innerText = 'PISTOLA DE METAL';
-                        document.getElementById('weapon-sub').innerText = 'CLIC: DISPARAR';
+                        this.storyPhase = 'act2_combat';
+
+                        // Activar interfaz completa de combate
+                        document.getElementById('health-card').style.display = 'flex';
+                        document.getElementById('weapon-selector-card').style.display = 'flex';
+                        this.updateWeaponUI();
+                        this.updateHealthUI();
                         this.sound.playSparkleSound();
 
-                        room.hostileElves.push({ id: 99, x: 540, y: 200, hp: 100, state: 'hostile', knocked: false, isBoss: true });
-                        this.showDialogue('evil', 'LÍDER REBELDE', '👹', "¡No te atreverás a dispararme, viejo tonto!");
-                        document.getElementById('status-display').innerText = 'DEFIÉNDETE DEL LÍDER REBELDE';
+                        // Desatar hordas de elfos rebeldes en las salas
+                        this.startAct2();
                     }
                 }
 
@@ -1164,7 +1533,68 @@
                             elf.x += Math.cos(ang) * 2.5;
                             elf.y += Math.sin(ang) * 2.5;
                         }
+
+                        // Daño a Santa en Acto 2 si está cerca
+                        if (this.storyPhase === 'act2_combat' && dist < 32) {
+                            if (!elf.attackCooldown) elf.attackCooldown = 0;
+                            elf.attackCooldown -= dt;
+                            if (elf.attackCooldown <= 0) {
+                                elf.attackCooldown = 1.0;
+                                this.player.hp = Math.max(0, this.player.hp - 12);
+                                this.updateHealthUI();
+                                this.triggerScreenFlash();
+                                this.sound.playWhackSound();
+                                if (this.player.hp <= 0) {
+                                    this.player.hp = 100;
+                                    this.updateHealthUI();
+                                    this.showDialogue('santa', 'SANTA CLAUS', '💥', "¡No desfalleceré! ¡La fábrica debe ser purificada!");
+                                }
+                            }
+                        }
                     });
+                }
+            }
+
+            openPlanLetter() {
+                const modal = document.getElementById('plan-letter-modal');
+                if (modal) modal.classList.add('show');
+                this.sound.playSparkleSound();
+            }
+
+            closePlanLetter() {
+                const modal = document.getElementById('plan-letter-modal');
+                if (modal) modal.classList.remove('show');
+                this.storyPhase = 'go_to_warehouse_for_gun';
+
+                // Colocar la pistola en el almacén oeste (0,1)
+                this.rooms['0,1'].gunPickup = { x: 500, y: 300 };
+                // Asegurar paso abierto entre salas
+                this.rooms['1,1'].lockedDoors.left = false;
+                this.rooms['1,1'].lockedDoors.right = false;
+                document.getElementById('map-0-1').classList.remove('locked');
+                document.getElementById('map-0-1').innerText = '🔫';
+
+                this.showDialogue('santa', 'SANTA CLAUS', '📜', "¡Los elfos planean usar la fuerza! Debo ir al <strong>Almacén de Cajas (Oeste)</strong> a incautar esa pistola.");
+                document.getElementById('status-display').innerText = 'MISIÓN: ¡VE AL ALMACÉN OESTE A POR LA PISTOLA!';
+            }
+
+            startAct2() {
+                // Activar atmósfera de Acto 2
+                document.getElementById('game-container').classList.add('horror-active');
+                this.sound.isHorrorMusic = true;
+                this.showDialogue('santa', 'SANTA CLAUS', '🔫', "¡Tengo el arma en mis manos! ¡ACTO 2: La fábrica está tomada por los insurrectos, debo limpiar cada sala!");
+                document.getElementById('status-display').innerText = 'ACTO 2: ELIMINA A LOS AMOTINADOS';
+
+                // Llenar salas con elfos hostiles para combate dinámico
+                for (const rKey in this.rooms) {
+                    const r = this.rooms[rKey];
+                    if (!r.hostileElves) r.hostileElves = [];
+                    // Añadir patrulla enemiga si no hay
+                    if (r.hostileElves.length < 3) {
+                        r.hostileElves.push({ id: Math.random(), x: 350, y: 280, hp: 60, maxHp: 60, state: 'hostile', knocked: false });
+                        r.hostileElves.push({ id: Math.random(), x: 650, y: 400, hp: 60, maxHp: 60, state: 'hostile', knocked: false });
+                        r.hostileElves.push({ id: Math.random(), x: 500, y: 220, hp: 80, maxHp: 80, state: 'hostile', knocked: false, isLeader: true });
+                    }
                 }
             }
 
@@ -1249,50 +1679,75 @@
                 if (!this.player.weapon || this.player.attackCooldown > 0) return;
                 const room = this.getCurrentRoom();
 
-                // MELEE AMIGABLE (NOQUEO SIN SANGRE)
+                // MELEE AMIGABLE (NOQUEO SIN SANGRE O COMBATE)
                 if (this.player.weapon === 'candy_cane' || this.player.weapon === 'lollipop') {
-                    this.player.attackCooldown = 0.35;
+                    this.player.attackCooldown = 0.28;
                     this.player.swingAnim = 1.0;
                     this.sound.playWhackSound();
 
+                    // Partículas de estela de golpeo
+                    const forwardAngle = (this.player.facing === 'left') ? Math.PI : (this.player.facing === 'right') ? 0 : (this.player.facing === 'up') ? -Math.PI/2 : Math.PI/2;
+                    for (let s = 0; s < 8; s++) {
+                        const arcAng = forwardAngle - 0.7 + (s / 7) * 1.4;
+                        this.sparkles.push({
+                            x: this.player.x + Math.cos(arcAng) * 45,
+                            y: this.player.y + Math.sin(arcAng) * 45,
+                            vx: Math.cos(arcAng) * 3,
+                            vy: Math.sin(arcAng) * 3,
+                            color: '#ff70a6',
+                            radius: 3.5,
+                            life: 0.25
+                        });
+                    }
+
                     if (room.hostileElves) {
                         room.hostileElves.forEach(elf => {
-                            if (!elf.knocked && Math.hypot(elf.x - this.player.x, elf.y - this.player.y) < 75) {
-                                elf.hp -= 35;
+                            if (!elf.knocked && Math.hypot(elf.x - this.player.x, elf.y - this.player.y) < 85) {
+                                elf.hp -= (this.player.weapon === 'lollipop' ? 45 : 35);
                                 this.createSparkles(elf.x, elf.y, '#ffd166', 15);
+                                this.sound.playWhackSound();
                                 if (elf.hp <= 0) {
-                                    elf.knocked = true; // Noqueado en el suelo SIN SANGRE
-                                    this.sound.playWhackSound();
+                                    if (this.storyPhase === 'act2_combat') {
+                                        this.triggerGoreExplosion(elf.x, elf.y);
+                                        elf.knocked = true;
+                                    } else {
+                                        elf.knocked = true; // Noqueado en el suelo SIN SANGRE en Acto 1
+                                    }
                                 }
                             }
                         });
                     }
                 }
 
-                // DISPARO DE PISTOLA -> ¡DESTRUCCIÓN GORE TOTAL!
+                // DISPARO DE PISTOLA -> CREAR PROYECTIL VISIBLE QUE VUELA HACIA DONDE MIRA
                 else if (this.player.weapon === 'gun') {
-                    this.player.attackCooldown = 0.45;
+                    this.player.attackCooldown = 0.35;
+                    this.player.swingAnim = 0.8;
                     this.sound.playGunshot();
                     this.triggerScreenFlash();
 
-                    if (room.hostileElves) {
-                        for (let i = room.hostileElves.length - 1; i >= 0; i--) {
-                            const elf = room.hostileElves[i];
-                            if (!elf.knocked) {
-                                const d = Math.hypot(elf.x - this.player.x, elf.y - this.player.y);
-                                if (d < 380) {
-                                    this.triggerGoreExplosion(elf.x, elf.y);
-                                    room.hostileElves.splice(i, 1);
+                    // Determinar ángulo de disparo según la dirección que mira Santa
+                    let shootAngle = 0;
+                    if (this.player.facing === 'right') shootAngle = 0;
+                    else if (this.player.facing === 'left') shootAngle = Math.PI;
+                    else if (this.player.facing === 'up') shootAngle = -Math.PI / 2;
+                    else if (this.player.facing === 'down') shootAngle = Math.PI / 2;
 
-                                    document.getElementById('game-container').classList.add('horror-active');
-                                    this.sound.isHorrorMusic = true;
-                                    document.getElementById('status-display').innerText = '🩸 ¡LA PESADILLA SE DESATA!';
-                                    this.showDialogue('santa', 'SANTA CLAUS', '😨', "¡DIOS MÍO! ¡¿QUÉ HE HECHO?! ¡¿QUÉ CLASE DE ARMA ES ESTA?!");
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    const spawnX = this.player.x + Math.cos(shootAngle) * 28;
+                    const spawnY = this.player.y + Math.sin(shootAngle) * 28;
+
+                    // Proyectil con velocidad, brillo y estela
+                    this.projectiles.push({
+                        x: spawnX,
+                        y: spawnY,
+                        vx: Math.cos(shootAngle) * 16,
+                        vy: Math.sin(shootAngle) * 16,
+                        radius: 5,
+                        life: 1.2
+                    });
+
+                    // Chispas del cañón
+                    this.createSparkles(spawnX, spawnY, '#ffd166', 12);
                 }
             }
 
@@ -1377,6 +1832,16 @@
                 const room = this.getCurrentRoom();
 
                 ctx.save();
+
+                // Tensión dinámica: Temblor de cámara según la vida restante
+                const missingHpPct = Math.max(0, 1 - (this.player.hp / this.player.maxHp));
+                if (missingHpPct > 0.05) {
+                    const shakeIntensity = missingHpPct * 7.5; // Máximo temblor de 7.5px a 0 HP
+                    const shakeX = (Math.random() - 0.5) * shakeIntensity;
+                    const shakeY = (Math.random() - 0.5) * shakeIntensity;
+                    ctx.translate(shakeX, shakeY);
+                }
+
                 ctx.clearRect(0, 0, this.W, this.H);
 
                 this.renderRoomStructure(ctx, room);
@@ -1397,6 +1862,7 @@
                 if (room.candyDecor) room.candyDecor.forEach(d => queue.push({ y: d.y + 40, type: 'candyDecor', obj: d }));
                 if (room.candyWeapons) room.candyWeapons.forEach(w => queue.push({ y: w.y, type: 'candyWeapon', obj: w }));
                 if (room.gunPickup) queue.push({ y: room.gunPickup.y, type: 'gunPickup', obj: room.gunPickup });
+                if (room.planChest) queue.push({ y: room.planChest.y, type: 'planChest', obj: room.planChest });
                 if (room.gifts) room.gifts.forEach(g => queue.push({ y: g.y, type: 'gift', obj: g }));
                 if (room.elves) room.elves.forEach(e => queue.push({ y: e.y + 10, type: 'elf', obj: e }));
                 if (room.rebels) room.rebels.forEach(r => { if (!r.captured) queue.push({ y: r.y + 10, type: 'rebel', obj: r }); });
@@ -1415,6 +1881,7 @@
                     else if (item.type === 'candyDecor') this.render3DCandyDecor(ctx, item.obj);
                     else if (item.type === 'candyWeapon') this.render3DWeaponPickup(ctx, item.obj);
                     else if (item.type === 'gunPickup') this.render3DGunPickup(ctx, item.obj);
+                    else if (item.type === 'planChest') this.render3DPlanChest(ctx, item.obj);
                     else if (item.type === 'gift') this.render3DGift(ctx, item.obj);
                     else if (item.type === 'elf') this.render3DElf(ctx, item.obj);
                     else if (item.type === 'rebel') this.render3DRebel(ctx, item.obj);
@@ -2049,25 +2516,54 @@
                 }
 
                 // 8. Manos con guantes blancos y arma empuñada
+                const swingOffset = Math.sin(p.swingAnim * Math.PI) * 22; // Barrido dinámico más amplio
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
                 ctx.arc(-22, 0, 5, 0, Math.PI * 2);
-                ctx.arc(22, 0 + Math.sin(p.swingAnim * Math.PI) * 14, 5, 0, Math.PI * 2);
+                ctx.arc(22, 0 + swingOffset * 0.4, 5, 0, Math.PI * 2);
                 ctx.fill();
 
+                // Renderizado y orientación precisa del arma empuñada
                 ctx.save();
-                ctx.translate(22, 0 + Math.sin(p.swingAnim * Math.PI) * 14);
+                ctx.translate(22, 0 + swingOffset * 0.4);
+
                 if (p.weapon === 'candy_cane') {
-                    ctx.rotate(p.swingAnim * 1.5 - 0.2);
-                    ctx.font = '24px sans-serif';
-                    ctx.fillText('🍭', 0, -8);
+                    // Animación de barrido estilo swing agresivo
+                    ctx.rotate(p.swingAnim * 2.2 - 0.4);
+                    ctx.font = '28px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🍭', 4, -12);
                 } else if (p.weapon === 'lollipop') {
-                    ctx.rotate(p.swingAnim * 1.5 - 0.2);
-                    ctx.font = '26px sans-serif';
-                    ctx.fillText('🍭', 0, -8);
+                    ctx.rotate(p.swingAnim * 2.5 - 0.5);
+                    ctx.font = '30px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🍭', 4, -12);
                 } else if (p.weapon === 'gun') {
-                    ctx.font = '24px sans-serif';
-                    ctx.fillText('🔫', 0, -4);
+                    // Cañón apuntando hacia adelante: si mira hacia arriba o de espaldas, rota acordemente
+                    let gunAngle = 0;
+                    if (isUp) gunAngle = -Math.PI / 2;
+                    else if (isDown) gunAngle = Math.PI / 3;
+                    else gunAngle = 0; // Apuntando al frente del perfil
+
+                    ctx.rotate(gunAngle - (p.swingAnim * 0.4));
+                    // Dibujar pistola de metal detallada con cañón apuntando al frente
+                    ctx.fillStyle = '#2b2d42';
+                    this.drawRoundedRect(ctx, -2, -6, 20, 8, 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#4a4e69';
+                    this.drawRoundedRect(ctx, 4, 2, 7, 10, 2);
+                    ctx.fill();
+                    // Cañón / Boca del arma
+                    ctx.fillStyle = '#111317';
+                    ctx.fillRect(18, -4, 4, 4);
+
+                    // Flash de disparo en el cañón
+                    if (p.swingAnim > 0.4) {
+                        ctx.fillStyle = '#ffd166';
+                        ctx.beginPath();
+                        ctx.arc(24, -2, 6, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
                 }
                 ctx.restore();
 
@@ -2114,6 +2610,44 @@
                 ctx.restore();
             }
 
+            // Renderizado de la caja con el plan secreto
+            render3DPlanChest(ctx, chest) {
+                ctx.save();
+                ctx.translate(chest.x, chest.y);
+                const bounce = Math.sin(performance.now() * 0.005) * 5;
+
+                // Sombra
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.beginPath();
+                ctx.ellipse(0, 16, 22, 10, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Caja de madera tallada con refuerzos dorados
+                ctx.fillStyle = '#8b5e34';
+                this.drawRoundedRect(ctx, -20, -14 + bounce, 40, 28, 6);
+                ctx.fill();
+                ctx.fillStyle = '#67411b';
+                this.drawRoundedRect(ctx, -20, 2 + bounce, 40, 12, 4);
+                ctx.fill();
+
+                // Cierre y herrajes dorados
+                ctx.fillStyle = '#ffd166';
+                ctx.fillRect(-4, -4 + bounce, 8, 10);
+                ctx.fillStyle = '#e09f3e';
+                ctx.fillRect(-20, -6 + bounce, 5, 14);
+                ctx.fillRect(15, -6 + bounce, 5, 14);
+
+                // Pergamino asomando
+                ctx.font = '22px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('📜', 0, -18 + bounce);
+
+                ctx.font = 'bold 12px Fredoka One';
+                ctx.fillStyle = '#bc4749';
+                ctx.fillText('¡PLAN SECRETO!', 0, -32 + bounce);
+                ctx.restore();
+            }
+
             renderParticles(ctx) {
                 ctx.fillStyle = '#ffffff';
                 for (let i = 0; i < this.snowflakes.length; i++) {
@@ -2131,6 +2665,24 @@
                     ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                     ctx.fill();
                 });
+
+                // Dibujar proyectiles visibles (balas doradas con destello)
+                if (this.projectiles) {
+                    this.projectiles.forEach(b => {
+                        ctx.save();
+                        ctx.fillStyle = '#ffd166';
+                        ctx.shadowColor = '#ffb703';
+                        ctx.shadowBlur = 10;
+                        ctx.beginPath();
+                        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath();
+                        ctx.arc(b.x, b.y, b.radius * 0.5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    });
+                }
             }
         }
 
