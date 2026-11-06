@@ -426,6 +426,7 @@
             font-weight: 900;
         }
 
+        /* Flash Screen - Suave y no cegador */
         #flash-screen {
             position: absolute;
             top: 0;
@@ -435,9 +436,85 @@
             background: #fff;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.08s ease-out;
+            transition: opacity 0.05s ease-out;
             z-index: 80;
         }
+
+        /* Cinemática de Introducción Narrativa Retro Pixel */
+        #intro-cinematic {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, #20081c 0%, #08020a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 150;
+            opacity: 1;
+            transition: opacity 0.8s ease-in-out;
+            padding: 30px;
+        }
+        #intro-cinematic.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .cinematic-box {
+            max-width: 720px;
+            background: rgba(18, 10, 24, 0.95);
+            border: 4px solid #ff4d6d;
+            border-radius: 24px;
+            padding: 35px 45px;
+            box-shadow: 0 0 50px rgba(255, 77, 109, 0.35), inset 0 0 20px rgba(0, 0, 0, 0.8);
+            text-align: center;
+            position: relative;
+        }
+        .cinematic-badge {
+            display: inline-block;
+            background: #ff4d6d;
+            color: #fff;
+            font-family: 'Fredoka One', cursive;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+        .cinematic-quote {
+            font-family: 'Fredoka One', cursive;
+            font-size: 26px;
+            color: #fff;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+        }
+        .cinematic-quote em {
+            color: #ffb703;
+            font-style: normal;
+            border-bottom: 2px dashed #ffb703;
+        }
+        .cinematic-desc {
+            font-size: 15px;
+            color: #c9b9ce;
+            line-height: 1.7;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        .cinematic-elf-preview {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 25px;
+            font-size: 32px;
+        }
+        .cinematic-elf-preview span {
+            animation: bounce-talk 0.8s infinite alternate ease-in-out;
+        }
+        .cinematic-elf-preview span:nth-child(2) { animation-delay: 0.2s; }
+        .cinematic-elf-preview span:nth-child(3) { animation-delay: 0.4s; }
 
         /* Modal */
         .game-modal {
@@ -609,11 +686,33 @@
             </div>
         </div>
 
-        <div id="start-modal" class="game-modal show">
+        <!-- Cinemática de Introducción Narrativa -->
+        <div id="intro-cinematic">
+            <div class="cinematic-box">
+                <div class="cinematic-badge">PROLOGO — EL POLO NORTE</div>
+                <h1 class="cinematic-quote">
+                    "Un día Papá Noel no iba a tener una Navidad <em>normal</em>..."
+                </h1>
+                <div class="cinematic-elf-preview">
+                    <span>🧝‍♂️</span>
+                    <span>😈</span>
+                    <span>🧑‍⚕️</span>
+                    <span>👺</span>
+                </div>
+                <p class="cinematic-desc">
+                    Un rumor oscuro se propaga por las cintas de embalaje... Los elfos susurran sobre contratos de explotación, mientras el Dr. Valeriano perfecciona sus cápsulas de "reacondicionamiento". Entre los montones de regalos, alguien ha dejado notas sobre una insurrección inminente.
+                </p>
+                <button id="btn-intro-continue" class="btn-kawaii" style="background: linear-gradient(135deg, #d90429 0%, #ff4d6d 100%);">
+                    CONTINUAR AL TALLER 🎅✨
+                </button>
+            </div>
+        </div>
+
+        <div id="start-modal" class="game-modal">
             <div class="modal-card">
                 <h1 class="modal-title">SANTA'S LAST CHRISTMAS ✨</h1>
                 <p class="modal-sub">
-                    Revisa los regalos del taller con tus queridos artesanos. Abre la puerta del norte con la Llave Dorada. Cuando los elfos malignos escapen, <strong>captúralos uno a uno</strong> y llévalos en tus brazos con el Doctor al Centro de Reacondicionamiento.
+                    Revisa los regalos del taller con tus artesanos. Abre la puerta norte con la Llave Dorada. Cuando los elfos rebeldes escapen, <strong>apunta con tu ratón en 360°</strong>, captúralos y devuélvelos al Doctor antes de que se desate la rebelión de la fábrica.
                 </p>
                 <button id="btn-start" class="btn-kawaii">¡ENTRAR AL TALLER! 💖</button>
             </div>
@@ -646,6 +745,7 @@
                 this.timer = null;
                 this.speechInterval = null;
                 this.isHorrorMusic = false;
+                this.glitchIntensity = 0.0; // 0.0 a 1.0 según la fase de terror
             }
 
             init() {
@@ -659,23 +759,49 @@
                 }
             }
 
+            // EVENTO 3 — LA MÚSICA QUE NO DEBERÍA SONAR & DEGRADACIÓN SONORA
             playMusicBoxNote(freq, timeOffset = 0, duration = 0.65, vol = 0.14) {
                 if (this.muted || !this.ctx || freq <= 0) return;
                 try {
                     const now = this.ctx.currentTime + timeOffset;
+
+                    // Micro-anomalía aleatoria en la música (desafinación, nota grave o interferencia sutil)
+                    let finalFreq = freq;
+                    let isGlitchNote = false;
+                    const glitchChance = 0.06 + (this.glitchIntensity * 0.22);
+                    if (Math.random() < glitchChance) {
+                        isGlitchNote = true;
+                        const r = Math.random();
+                        if (r < 0.35) {
+                            // Nota grave inesperada (sub-armónico repentino por 0.2s)
+                            finalFreq = freq * 0.25;
+                        } else if (r < 0.7) {
+                            // Micro desafinación inquietante (un cuarto de tono abajo)
+                            finalFreq = freq * 0.89;
+                        } else {
+                            // Tono chirriante distorsionado
+                            finalFreq = freq * 1.587;
+                        }
+                    }
+
                     const osc1 = this.ctx.createOscillator();
                     const osc2 = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
 
-                    osc1.type = this.isHorrorMusic ? 'sawtooth' : 'sine';
-                    osc1.frequency.setValueAtTime(freq, now);
+                    osc1.type = (this.isHorrorMusic || isGlitchNote) ? 'sawtooth' : 'sine';
+                    osc1.frequency.setValueAtTime(finalFreq, now);
 
-                    osc2.type = 'triangle';
-                    osc2.frequency.setValueAtTime(freq * (this.isHorrorMusic ? 1.414 : 2), now);
+                    osc2.type = isGlitchNote ? 'square' : 'triangle';
+                    osc2.frequency.setValueAtTime(finalFreq * (this.isHorrorMusic ? 1.414 : (isGlitchNote ? 1.83 : 2)), now);
+
+                    // Si hay glitch sonoro, micro-infusión de sonido industrial/interferencia de fondo
+                    if (isGlitchNote && Math.random() < 0.4) {
+                        this.playSubtleDistortionDrone(now);
+                    }
 
                     gain.gain.setValueAtTime(0.001, now);
-                    gain.gain.linearRampToValueAtTime(vol, now + 0.02);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+                    gain.gain.linearRampToValueAtTime(vol * (isGlitchNote ? 1.25 : 1.0), now + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + (isGlitchNote ? duration * 0.6 : duration));
 
                     osc1.connect(gain);
                     osc2.connect(gain);
@@ -685,6 +811,24 @@
                     osc2.start(now);
                     osc1.stop(now + duration);
                     osc2.stop(now + duration);
+                } catch(e) {}
+            }
+
+            // Ruido sutil o sub-drone casi imperceptible
+            playSubtleDistortionDrone(now) {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const g = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(45 + Math.random() * 25, now);
+                    g.gain.setValueAtTime(0.001, now);
+                    g.gain.linearRampToValueAtTime(0.06, now + 0.05);
+                    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+                    osc.connect(g);
+                    g.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
                 } catch(e) {}
             }
 
@@ -744,6 +888,55 @@
                     noise.connect(filter);
                     filter.connect(this.ctx.destination);
                     noise.start(now);
+                } catch(e) {}
+            }
+
+            // FASE 5: Sonido masivo del primer disparo "Punto de No Retorno"
+            playFirstGunshotPointOfNoReturn() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    // Detener melodía navideña de cajita de música por completo
+                    if (this.timer) {
+                        clearInterval(this.timer);
+                        this.timer = null;
+                    }
+
+                    // Cañonazo bajo y atronador
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(18, now + 0.65);
+                    gain.gain.setValueAtTime(1.0, now);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.7);
+
+                    // Explosión de ruido blanco filtrado masivo
+                    const bufferSize = Math.floor(this.ctx.sampleRate * 0.7);
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+                    }
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(1200, now);
+                    filter.frequency.exponentialRampToValueAtTime(80, now + 0.7);
+                    noise.connect(filter);
+                    filter.connect(this.ctx.destination);
+                    noise.start(now);
+
+                    // Reanudar música pero en modo horror distorsionado oscuro
+                    setTimeout(() => {
+                        this.isHorrorMusic = true;
+                        this.startMusic();
+                    }, 800);
                 } catch(e) {}
             }
 
@@ -848,6 +1041,7 @@
                     walkCycle: 0,
                     bounce: 0,
                     facing: 'down', // 'down', 'up', 'left', 'right'
+                    aimAngle: Math.PI / 2, // Rotación continua en 360° hacia el cursor
                     isMoving: false,
                     idleTime: 0,
                     carryingRebel: null, // Si lleva un elfo en brazos para llevarlo al doctor
@@ -885,6 +1079,17 @@
                 this.bloodSplats = [];
                 this.bloodParticles = [];
                 this.fleeingRebels = []; // Elfos que huyen visualmente por la sala actual
+
+                // TERROR PSICOLÓGICO Y DEGRADACIÓN AUDIOVISUAL PROGRESIVA
+                this.corruptionLevel = 0.0; // 0.0 (Acto 1 puro) a 1.0 (Horror total en Acto 2)
+                this.realityGlitch = {
+                    active: false,
+                    duration: 0,
+                    type: null // 'blood_gift', 'distorted_face', 'chromatic', 'vhs_jump'
+                };
+                this.nextRealityGlitchTime = performance.now() + 6000 + Math.random() * 8000;
+                this.firstShotFired = false;
+                this.freezeFrameTime = 0; // Microcongelación dramática para momentos clave
 
                 this.initRooms();
                 this.initSnow();
@@ -953,6 +1158,16 @@
 
                 document.getElementById('btn-start').onclick = () => this.startGame();
                 document.getElementById('btn-close-plan').onclick = () => this.closePlanLetter();
+                const btnIntro = document.getElementById('btn-intro-continue');
+                if (btnIntro) {
+                    btnIntro.onclick = () => {
+                        const intro = document.getElementById('intro-cinematic');
+                        if (intro) intro.classList.add('fade-out');
+                        const startM = document.getElementById('start-modal');
+                        if (startM) startM.classList.add('show');
+                        this.sound.playSparkleSound();
+                    };
+                }
             }
 
             selectWeaponSlot(slot) {
@@ -1068,13 +1283,23 @@
             initRooms() {
                 this.rooms = {};
 
-                // 1. PRIMERA SALA: TALLER CENTRAL (1,1)
+                // 1. PRIMERA SALA: TALLER CENTRAL (1,1) — HABITACIÓN DE REFERENCIA (ESTÁNDAR DE CALIDAD)
                 // Aquí primero se revisan los regalos y se habla con los elfos normales
                 this.rooms['1,1'] = {
                     title: 'SALA CENTRAL: TALLER DE REGALOS',
                     theme: 'cozy_wood',
                     doors: { top: true, bottom: false, left: true, right: true },
                     lockedDoors: { top: true, left: true, right: true },
+                    // Decoración de fondo rica (sin colisiones que bloqueen el paso)
+                    ambientDecor: [
+                        { x: 125, y: 110, type: 'toy_shelf', title: 'Estantería de Juguetes' },
+                        { x: 865, y: 110, type: 'toy_shelf', title: 'Estantería de Juguetes' },
+                        { x: 130, y: 380, type: 'gift_stack', count: 3 },
+                        { x: 920, y: 380, type: 'gift_stack', count: 4 },
+                        { x: 490, y: 100, type: 'north_pole_banner', text: '⭐ TALLER DE NAVIDAD ⭐' },
+                        { x: 260, y: 550, type: 'conveyor_belt', w: 180 },
+                        { x: 640, y: 550, type: 'conveyor_belt', w: 180 }
+                    ],
                     furniture: [
                         { x: 260, y: 160, w: 200, h: 90, depth: 28, title: 'Taller de Peluches' },
                         { x: 620, y: 160, w: 200, h: 90, depth: 28, title: 'Trenecitos' }
@@ -1085,9 +1310,9 @@
                         { id: 2, x: 540, y: 460, color: '#e9ff70', ribbon: '#ff9770', inspected: false, elfIdx: 2, quote: "¡Copito examinando el último lote de regalos! 🚂🧸" }
                     ],
                     elves: [
-                        { x: 360, y: 130, name: 'Pimpollo', emoji: '🧝‍♂️', coatColor: '#4cc9f0', hatColor: '#06d6a0' },
-                        { x: 720, y: 130, name: 'Cascabel', emoji: '🧝‍♀️', coatColor: '#3a86ff', hatColor: '#ff4d6d' },
-                        { x: 540, y: 340, name: 'Copito', emoji: '🧝‍♂️', coatColor: '#ffd166', hatColor: '#06d6a0' }
+                        { x: 360, y: 130, name: 'Pimpollo', emoji: '🧝‍♂️', coatColor: '#4cc9f0', hatColor: '#06d6a0', craft: 'bear', stareTimer: 0, isStaring: false },
+                        { x: 720, y: 130, name: 'Cascabel', emoji: '🧝‍♀️', coatColor: '#3a86ff', hatColor: '#ff4d6d', craft: 'train', stareTimer: 0, isStaring: false },
+                        { x: 540, y: 340, name: 'Copito', emoji: '🧝‍♂️', coatColor: '#ffd166', hatColor: '#06d6a0', craft: 'inspect', stareTimer: 0, isStaring: false }
                     ],
                     rebels: [],
                     candyWeapons: [],
@@ -1101,6 +1326,13 @@
                     theme: 'clinic_room',
                     doors: { top: false, bottom: true, left: false, right: false },
                     lockedDoors: {},
+                    ambientDecor: [
+                        { x: 120, y: 110, type: 'medical_cabinet', title: 'Botiquín & Sedantes' },
+                        { x: 920, y: 110, type: 'medical_cabinet', title: 'Fórmulas Químicas' },
+                        { x: 490, y: 95, type: 'lab_pipes', w: 180 },
+                        { x: 125, y: 460, type: 'oxygen_tank' },
+                        { x: 915, y: 460, type: 'oxygen_tank' }
+                    ],
                     furniture: [
                         { x: 180, y: 150, w: 180, h: 90, depth: 28, type: 'medical_desk', title: 'Mesa de Fórmulas' },
                         { x: 720, y: 150, w: 180, h: 90, depth: 28, type: 'medical_desk', title: 'Archivo Clínico' }
@@ -1125,6 +1357,12 @@
                     theme: 'warehouse',
                     doors: { top: false, bottom: false, left: false, right: true },
                     lockedDoors: {},
+                    ambientDecor: [
+                        { x: 130, y: 120, type: 'cargo_rack', w: 120 },
+                        { x: 500, y: 100, type: 'industrial_pipes' },
+                        { x: 880, y: 120, type: 'pallet_stack' },
+                        { x: 140, y: 520, type: 'caution_stripes', w: 140 }
+                    ],
                     furniture: [
                         { x: 240, y: 200, w: 140, h: 140, depth: 30, title: 'Pila de Cajas' },
                         { x: 680, y: 380, w: 160, h: 120, depth: 30, title: 'Empaquetado' }
@@ -1140,6 +1378,11 @@
                     theme: 'candy_kingdom',
                     doors: { top: false, bottom: false, left: true, right: false },
                     lockedDoors: {},
+                    ambientDecor: [
+                        { x: 490, y: 95, type: 'candy_pipes', w: 220 },
+                        { x: 125, y: 460, type: 'sugar_vats' },
+                        { x: 920, y: 460, type: 'sugar_vats' }
+                    ],
                     furniture: [
                         { x: 200, y: 150, w: 160, h: 100, depth: 32, title: 'Caldero de Menta' },
                         { x: 720, y: 150, w: 160, h: 100, depth: 32, title: 'Fuente de Caramelo' },
@@ -1160,6 +1403,57 @@
                     ],
                     gunPickup: null,
                     planChest: null
+                };
+
+                // 5. NUEVA SALA: FUNDICIÓN DE JUGUETES Y MAQUINARIA (1,2 - SALA SUR)
+                this.rooms['1,2'] = {
+                    title: 'FUNDICIÓN DE JUGUETES & MAQUINARIA PESADA',
+                    theme: 'warehouse',
+                    doors: { top: true, bottom: false, left: true, right: true },
+                    lockedDoors: {},
+                    ambientDecor: [
+                        { x: 130, y: 110, type: 'industrial_pipes', w: 140 },
+                        { x: 880, y: 110, type: 'cargo_rack', w: 120 },
+                        { x: 540, y: 95, type: 'lab_pipes', w: 200 }
+                    ],
+                    furniture: [
+                        { x: 220, y: 160, w: 200, h: 90, depth: 32, title: 'Horno de Plástico' },
+                        { x: 660, y: 160, w: 200, h: 90, depth: 32, title: 'Prensa Hidráulica' }
+                    ],
+                    notes: [
+                        { x: 540, y: 360, title: 'Nota Arrugada', text: '📝 "La cuota de producción es inhumana... El Dr. Valeriano no nos cura, nos reprograma. ¡Armaos con lo que podáis!"' }
+                    ],
+                    hostileElves: [
+                        { id: 10, x: 380, y: 320, hp: 80, maxHp: 80, state: 'hostile', type: 'heavy', isHeavy: true, knocked: false },
+                        { id: 11, x: 700, y: 320, hp: 45, maxHp: 45, state: 'hostile', type: 'scout', isFast: true, knocked: false }
+                    ],
+                    rebels: [],
+                    candyWeapons: [],
+                    gunPickup: null
+                };
+
+                // 6. NUEVA SALA: CALDERA Y GENERADOR INDUSTRIAL (0,2 - SALA SUROESTE)
+                this.rooms['0,2'] = {
+                    title: 'CALDERA DE VAPOR & GENERADOR NUCLEAR',
+                    theme: 'warehouse',
+                    doors: { top: true, bottom: false, left: false, right: true },
+                    lockedDoors: {},
+                    ambientDecor: [
+                        { x: 140, y: 480, type: 'caution_stripes', w: 160 },
+                        { x: 880, y: 110, type: 'industrial_pipes', w: 140 }
+                    ],
+                    furniture: [
+                        { x: 260, y: 180, w: 240, h: 120, depth: 36, title: 'Caldera Principal a Carbón' }
+                    ],
+                    notes: [
+                        { x: 740, y: 320, title: 'Manifiesto Rebelde', text: '📜 "Si Santa no cede, desconectaremos el generador térmico del Polo Norte. ¡Libertad o sabotaje!"' }
+                    ],
+                    hostileElves: [
+                        { id: 20, x: 680, y: 220, hp: 120, maxHp: 120, state: 'hostile', type: 'brute', isBoss: true, knocked: false }
+                    ],
+                    rebels: [],
+                    candyWeapons: [],
+                    gunPickup: null
                 };
             }
 
@@ -1248,19 +1542,71 @@
                     this.player.walkCycle += dt * 10;
                     this.player.bounce = Math.abs(Math.sin(this.player.walkCycle)) * 4.5;
                     this.player.idleTime = 0;
-                    if (Math.abs(mx) > Math.abs(my)) {
-                        this.player.facing = mx > 0 ? 'right' : 'left';
-                    } else {
-                        this.player.facing = my > 0 ? 'down' : 'up';
-                    }
                 } else {
                     this.player.isMoving = false;
                     this.player.bounce = 0;
                     this.player.idleTime += dt;
                 }
 
+                // Rotación dinámica en 360° apuntando siempre hacia el cursor del ratón (estilo Hotline Miami)
+                this.player.aimAngle = Math.atan2(this.mouse.y - this.player.y, this.mouse.x - this.player.x);
+                // Determinar facing discreto para retrocompatibilidad
+                const cosAim = Math.cos(this.player.aimAngle);
+                const sinAim = Math.sin(this.player.aimAngle);
+                if (Math.abs(cosAim) > Math.abs(sinAim)) {
+                    this.player.facing = cosAim > 0 ? 'right' : 'left';
+                } else {
+                    this.player.facing = sinAim > 0 ? 'down' : 'up';
+                }
+
                 if (this.player.attackCooldown > 0) this.player.attackCooldown -= dt;
                 if (this.player.swingAnim > 0) this.player.swingAnim -= dt * 6;
+
+                // ACTUALIZACIÓN DE EVENTOS DE TERROR PSICOLÓGICO Y ANOMALÍAS
+                // A) EVENTO 1: El elfo que deja de trabajar y se queda mirando a Santa si está cerca (< 85px)
+                if (room.elves) {
+                    room.elves.forEach(elf => {
+                        const distToSanta = Math.hypot(this.player.x - elf.x, this.player.y - elf.y);
+                        if (distToSanta < 88) {
+                            if (!elf.isStaring) {
+                                elf.stareTimer += dt;
+                                // 45% de probabilidad tras estar cerca 0.6s de que se quede mirando fijamente
+                                if (elf.stareTimer > 0.6) {
+                                    elf.isStaring = true;
+                                }
+                            }
+                        } else {
+                            // Cuando Santa se aleja, el elfo vuelve a trabajar normalmente
+                            elf.isStaring = false;
+                            elf.stareTimer = 0;
+                        }
+                    });
+                }
+
+                // B) EVENTO 2: Error de Realidad temporal (1-2 frames / 50-80ms)
+                if (this.realityGlitch.active) {
+                    this.realityGlitch.duration -= dt;
+                    if (this.realityGlitch.duration <= 0) {
+                        this.realityGlitch.active = false;
+                        this.realityGlitch.type = null;
+                        this.nextRealityGlitchTime = now + 9000 + Math.random() * 12000;
+                    }
+                } else if (now > this.nextRealityGlitchTime) {
+                    // Disparar error de realidad momentáneo
+                    this.realityGlitch.active = true;
+                    this.realityGlitch.duration = 0.07; // ~70ms (1-2 frames reales)
+                    const types = ['blood_gift', 'distorted_face', 'chromatic', 'vhs_jump'];
+                    this.realityGlitch.type = types[Math.floor(Math.random() * types.length)];
+                }
+
+                // C) DEGRADACIÓN PROGRESIVA SEGÚN FASE NARRATIVA
+                if (this.storyPhase === 'gifts_review') this.corruptionLevel = 0.05;
+                else if (this.storyPhase === 'hunt_single_rebel' || this.storyPhase === 'carry_to_doctor') this.corruptionLevel = 0.18;
+                else if (this.storyPhase === 'candy_revolt' || this.storyPhase === 'candy_fight') this.corruptionLevel = 0.38;
+                else if (this.storyPhase === 'go_to_warehouse_for_gun') this.corruptionLevel = 0.55;
+                else if (this.storyPhase === 'act2_combat') this.corruptionLevel = 1.0;
+
+                this.sound.glitchIntensity = this.corruptionLevel;
 
                 // Nieve
                 for (let i = 0; i < this.snowflakes.length; i++) {
@@ -1523,15 +1869,18 @@
                     }
                 }
 
-                // IA de hostiles
+                // IA de hostiles diferenciada por arquetipo (Hotline Miami / The Binding of Isaac)
                 if (room.hostileElves) {
                     room.hostileElves.forEach(elf => {
                         if (elf.knocked || elf.state !== 'hostile') return;
                         const dist = Math.hypot(this.player.x - elf.x, this.player.y - elf.y);
+                        // Velocidad según clase de enemigo
+                        const moveSpeed = elf.isFast ? 3.8 : (elf.isBoss ? 1.6 : 2.4);
+
                         if (dist > 35) {
                             const ang = Math.atan2(this.player.y - elf.y, this.player.x - elf.x);
-                            elf.x += Math.cos(ang) * 2.5;
-                            elf.y += Math.sin(ang) * 2.5;
+                            elf.x += Math.cos(ang) * moveSpeed;
+                            elf.y += Math.sin(ang) * moveSpeed;
                         }
 
                         // Daño a Santa en Acto 2 si está cerca
@@ -1539,16 +1888,29 @@
                             if (!elf.attackCooldown) elf.attackCooldown = 0;
                             elf.attackCooldown -= dt;
                             if (elf.attackCooldown <= 0) {
-                                elf.attackCooldown = 1.0;
-                                this.player.hp = Math.max(0, this.player.hp - 12);
+                                elf.attackCooldown = elf.isFast ? 0.6 : 1.1;
+                                const damage = elf.isBoss ? 20 : (elf.isHeavy ? 15 : 10);
+                                this.player.hp = Math.max(0, this.player.hp - damage);
                                 this.updateHealthUI();
-                                this.triggerScreenFlash();
                                 this.sound.playWhackSound();
                                 if (this.player.hp <= 0) {
                                     this.player.hp = 100;
                                     this.updateHealthUI();
                                     this.showDialogue('santa', 'SANTA CLAUS', '💥', "¡No desfalleceré! ¡La fábrica debe ser purificada!");
                                 }
+                            }
+                        }
+                    });
+                }
+
+                // Interacción con Notas de Rebelión esparcidas por la fábrica
+                if (room.notes) {
+                    room.notes.forEach(note => {
+                        if (Math.hypot(note.x - this.player.x, note.y - this.player.y) < 65) {
+                            if (!note.read) {
+                                note.read = true;
+                                this.sound.playSparkleSound();
+                                this.showDialogue('evil', note.title, '📜', note.text);
                             }
                         }
                     });
@@ -1591,9 +1953,9 @@
                     if (!r.hostileElves) r.hostileElves = [];
                     // Añadir patrulla enemiga si no hay
                     if (r.hostileElves.length < 3) {
-                        r.hostileElves.push({ id: Math.random(), x: 350, y: 280, hp: 60, maxHp: 60, state: 'hostile', knocked: false });
-                        r.hostileElves.push({ id: Math.random(), x: 650, y: 400, hp: 60, maxHp: 60, state: 'hostile', knocked: false });
-                        r.hostileElves.push({ id: Math.random(), x: 500, y: 220, hp: 80, maxHp: 80, state: 'hostile', knocked: false, isLeader: true });
+                        r.hostileElves.push({ id: Math.random(), x: 350, y: 280, hp: 55, maxHp: 55, state: 'hostile', type: 'scout', isFast: true, knocked: false });
+                        r.hostileElves.push({ id: Math.random(), x: 650, y: 400, hp: 90, maxHp: 90, state: 'hostile', type: 'heavy', isHeavy: true, knocked: false });
+                        r.hostileElves.push({ id: Math.random(), x: 500, y: 220, hp: 120, maxHp: 120, state: 'hostile', type: 'brute', isBoss: true, knocked: false });
                     }
                 }
             }
@@ -1685,8 +2047,8 @@
                     this.player.swingAnim = 1.0;
                     this.sound.playWhackSound();
 
-                    // Partículas de estela de golpeo
-                    const forwardAngle = (this.player.facing === 'left') ? Math.PI : (this.player.facing === 'right') ? 0 : (this.player.facing === 'up') ? -Math.PI/2 : Math.PI/2;
+                    // Partículas de estela de golpeo orientadas hacia donde apunta el cursor en 360°
+                    const forwardAngle = this.player.aimAngle;
                     for (let s = 0; s < 8; s++) {
                         const arcAng = forwardAngle - 0.7 + (s / 7) * 1.4;
                         this.sparkles.push({
@@ -1719,35 +2081,51 @@
                     }
                 }
 
-                // DISPARO DE PISTOLA -> CREAR PROYECTIL VISIBLE QUE VUELA HACIA DONDE MIRA
+                // DISPARO DE PISTOLA -> APUNTADO PRECISO EN 360° HACIA EL CURSOR
                 else if (this.player.weapon === 'gun') {
-                    this.player.attackCooldown = 0.35;
+                    this.player.attackCooldown = 0.25;
                     this.player.swingAnim = 0.8;
-                    this.sound.playGunshot();
-                    this.triggerScreenFlash();
 
-                    // Determinar ángulo de disparo según la dirección que mira Santa
-                    let shootAngle = 0;
-                    if (this.player.facing === 'right') shootAngle = 0;
-                    else if (this.player.facing === 'left') shootAngle = Math.PI;
-                    else if (this.player.facing === 'up') shootAngle = -Math.PI / 2;
-                    else if (this.player.facing === 'down') shootAngle = Math.PI / 2;
+                    // =========================================================================
+                    // FASE 5: EL PRIMER DISPARO — EL PUNTO DE NO RETORNO (CINEMÁTICA IMPACTANTE)
+                    // =========================================================================
+                    if (!this.firstShotFired) {
+                        this.firstShotFired = true;
+                        this.corruptionLevel = 1.0;
+                        this.sound.isHorrorMusic = true;
+                        document.getElementById('game-container').classList.add('horror-active');
 
-                    const spawnX = this.player.x + Math.cos(shootAngle) * 28;
-                    const spawnY = this.player.y + Math.sin(shootAngle) * 28;
+                        // 1. Sonido pico ensordecedor y corte de música navideña
+                        this.sound.playFirstGunshotPointOfNoReturn();
+
+                        // 2. Destello breve estilizado
+                        this.realityGlitch.active = true;
+                        this.realityGlitch.duration = 0.2;
+                        this.realityGlitch.type = 'vhs_jump';
+
+                        this.showDialogue('santa', 'SANTA CLAUS', '🩸', "<em>¡¡BANG!!</em> ...Ya no hay vuelta atrás. Esto ya no es una fiesta navideña.");
+                    } else {
+                        this.sound.playGunshot();
+                        // Flash de pantalla cegador eliminado a petición
+                    }
+
+                    // Determinar ángulo de disparo exacto en 360° apuntando al cursor
+                    const shootAngle = this.player.aimAngle;
+                    const spawnX = this.player.x + Math.cos(shootAngle) * 32;
+                    const spawnY = this.player.y + Math.sin(shootAngle) * 32;
 
                     // Proyectil con velocidad, brillo y estela
                     this.projectiles.push({
                         x: spawnX,
                         y: spawnY,
-                        vx: Math.cos(shootAngle) * 16,
-                        vy: Math.sin(shootAngle) * 16,
+                        vx: Math.cos(shootAngle) * 18,
+                        vy: Math.sin(shootAngle) * 18,
                         radius: 5,
                         life: 1.2
                     });
 
-                    // Chispas del cañón
-                    this.createSparkles(spawnX, spawnY, '#ffd166', 12);
+                    // Chispas del cañón localizadas
+                    this.createSparkles(spawnX, spawnY, '#ffd166', 8);
                 }
             }
 
@@ -1833,10 +2211,10 @@
 
                 ctx.save();
 
-                // Tensión dinámica: Temblor de cámara según la vida restante
-                const missingHpPct = Math.max(0, 1 - (this.player.hp / this.player.maxHp));
-                if (missingHpPct > 0.05) {
-                    const shakeIntensity = missingHpPct * 7.5; // Máximo temblor de 7.5px a 0 HP
+                // Tensión dinámica: Temblor de cámara SOLO cuando queda 30 de vida o menos
+                if (this.player.hp <= 30) {
+                    const lowHpPct = Math.max(0, (30 - this.player.hp) / 30); // 0 en 30 HP -> 1.0 en 0 HP
+                    const shakeIntensity = lowHpPct * 9.0; // Temblor intenso de hasta 9px en peligro crítico
                     const shakeX = (Math.random() - 0.5) * shakeIntensity;
                     const shakeY = (Math.random() - 0.5) * shakeIntensity;
                     ctx.translate(shakeX, shakeY);
@@ -1857,6 +2235,7 @@
                 // Ordenar en profundidad Y-Sorting
                 const queue = [];
 
+                if (room.ambientDecor) room.ambientDecor.forEach(d => queue.push({ y: d.y, type: 'ambientDecor', obj: d }));
                 if (room.furniture) room.furniture.forEach(f => queue.push({ y: f.y + f.h, type: 'furniture', obj: f }));
                 if (room.cabins) room.cabins.forEach(c => queue.push({ y: c.y + c.h, type: 'cabin', obj: c }));
                 if (room.candyDecor) room.candyDecor.forEach(d => queue.push({ y: d.y + 40, type: 'candyDecor', obj: d }));
@@ -1866,6 +2245,8 @@
                 if (room.gifts) room.gifts.forEach(g => queue.push({ y: g.y, type: 'gift', obj: g }));
                 if (room.elves) room.elves.forEach(e => queue.push({ y: e.y + 10, type: 'elf', obj: e }));
                 if (room.rebels) room.rebels.forEach(r => { if (!r.captured) queue.push({ y: r.y + 10, type: 'rebel', obj: r }); });
+                // Notas de conspiración esparcidas
+                if (room.notes) room.notes.forEach(n => queue.push({ y: n.y, type: 'note', obj: n }));
                 // Elfos que huyen visualmente por la sala actual
                 if (this.fleeingRebels) this.fleeingRebels.forEach(fr => queue.push({ y: fr.y + 10, type: 'rebel', obj: fr }));
                 if (room.doctor) queue.push({ y: room.doctor.y + 10, type: 'doctor', obj: room.doctor });
@@ -1876,13 +2257,15 @@
                 queue.sort((a, b) => a.y - b.y);
 
                 queue.forEach(item => {
-                    if (item.type === 'furniture') this.render3DFurniture(ctx, item.obj);
+                    if (item.type === 'ambientDecor') this.renderAmbientDecor(ctx, item.obj);
+                    else if (item.type === 'furniture') this.render3DFurniture(ctx, item.obj);
                     else if (item.type === 'cabin') this.render3DCabin(ctx, item.obj);
                     else if (item.type === 'candyDecor') this.render3DCandyDecor(ctx, item.obj);
                     else if (item.type === 'candyWeapon') this.render3DWeaponPickup(ctx, item.obj);
                     else if (item.type === 'gunPickup') this.render3DGunPickup(ctx, item.obj);
                     else if (item.type === 'planChest') this.render3DPlanChest(ctx, item.obj);
                     else if (item.type === 'gift') this.render3DGift(ctx, item.obj);
+                    else if (item.type === 'note') this.renderNotePickup(ctx, item.obj);
                     else if (item.type === 'elf') this.render3DElf(ctx, item.obj);
                     else if (item.type === 'rebel') this.render3DRebel(ctx, item.obj);
                     else if (item.type === 'doctor') this.render3DDoctor(ctx, item.obj);
@@ -1899,36 +2282,181 @@
 
                 this.renderParticles(ctx);
 
+                // =========================================================================
+                // FASE 4: SISTEMA REUTILIZABLE DE EFECTOS VISUALES Y DEGRADACIÓN DE PANTALLA
+                // =========================================================================
+                this.renderHorrorScreenPostProcessing(ctx);
+
                 ctx.restore();
             }
 
-            renderRoomStructure(ctx, room) {
-                if (room.theme === 'candy_kingdom') ctx.fillStyle = '#fff0f3';
-                else if (room.theme === 'clinic_room') ctx.fillStyle = '#eaf4f8';
-                else ctx.fillStyle = '#fff8f0';
-
-                ctx.fillRect(0, 0, this.W, this.H);
-
-                ctx.strokeStyle = (room.theme === 'candy_kingdom') ? '#ffccd5' : '#fae1dd';
-                ctx.lineWidth = 2;
-                for (let x = 70; x < this.W - 70; x += 65) {
-                    ctx.beginPath();
-                    ctx.moveTo(x, 70);
-                    ctx.lineTo(x, this.H - 70);
-                    ctx.stroke();
+            renderHorrorScreenPostProcessing(ctx) {
+                // 1. Aberración cromática / Separación RGB en los bordes
+                if (this.corruptionLevel > 0.1 || (this.realityGlitch.active && this.realityGlitch.type === 'chromatic')) {
+                    const rgbShift = (this.realityGlitch.active ? 8 : (this.corruptionLevel * 4.5));
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'screen';
+                    ctx.globalAlpha = 0.12 * Math.max(0.4, this.corruptionLevel);
+                    // Desplazamiento rojo
+                    ctx.drawImage(this.canvas, rgbShift, 0);
+                    ctx.restore();
                 }
 
+                // 2. Ruido VHS / Scanlines horizontales
+                if (this.corruptionLevel > 0.25 || this.realityGlitch.active) {
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                    for (let y = 0; y < this.H; y += 4) {
+                        ctx.fillRect(0, y, this.W, 1.5);
+                    }
+
+                    // Pequeño salto de línea VHS aleatorio
+                    if (Math.random() < 0.12) {
+                        const bandY = Math.random() * (this.H - 20);
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+                        ctx.fillRect(0, bandY, this.W, 6 + Math.random() * 12);
+                    }
+                    ctx.restore();
+                }
+
+                // 3. Destellos rojos o micro-fotogramas negros durante el glitch
+                if (this.realityGlitch.active) {
+                    if (this.realityGlitch.type === 'vhs_jump') {
+                        ctx.save();
+                        ctx.fillStyle = (Math.random() > 0.5) ? 'rgba(217, 4, 41, 0.18)' : 'rgba(0, 0, 0, 0.35)';
+                        ctx.fillRect(0, 0, this.W, this.H);
+                        ctx.restore();
+                    }
+                }
+            }
+
+            renderRoomStructure(ctx, room) {
+                // 1. CAPA 1: SUELO RICO CON TEXTURA, VARIACIÓN DE TONO Y JUNTAS
+                const isHorror = (this.corruptionLevel > 0.4);
+                let floorBase = '#fff8f0';
+                let tileStripe1 = '#fcf2e8';
+                let tileStripe2 = '#fffdf9';
+                let wallBase = '#f8d7da';
+                let wallMoulding = '#f28482';
+
+                if (room.theme === 'cozy_wood') {
+                    floorBase = isHorror ? '#e2d7cc' : '#fef6ed';
+                    tileStripe1 = isHorror ? '#d8ccbf' : '#fbeedb';
+                    tileStripe2 = isHorror ? '#e5ddd5' : '#fff9f2';
+                    wallBase = isHorror ? '#ba7c87' : '#fbc4ab';
+                    wallMoulding = isHorror ? '#843b48' : '#f28482';
+                } else if (room.theme === 'clinic_room') {
+                    floorBase = isHorror ? '#cad5db' : '#eaf4f8';
+                    tileStripe1 = isHorror ? '#b8c6cd' : '#d8edf4';
+                    tileStripe2 = isHorror ? '#d2dde3' : '#f4fbfe';
+                    wallBase = isHorror ? '#6d95b0' : '#bde0fe';
+                    wallMoulding = isHorror ? '#3f6782' : '#90e0ef';
+                } else if (room.theme === 'warehouse') {
+                    floorBase = isHorror ? '#c5b8a5' : '#eee5d3';
+                    tileStripe1 = isHorror ? '#b5a691' : '#e2d7be';
+                    tileStripe2 = isHorror ? '#cec3b1' : '#f7f1e3';
+                    wallBase = isHorror ? '#7e6c58' : '#d4a373';
+                    wallMoulding = isHorror ? '#4d3e2d' : '#bc6c25';
+                } else if (room.theme === 'candy_kingdom') {
+                    floorBase = isHorror ? '#e4cbd2' : '#fff0f3';
+                    tileStripe1 = isHorror ? '#d4b5bd' : '#ffe5ec';
+                    tileStripe2 = isHorror ? '#eddbe0' : '#fff5f7';
+                    wallBase = isHorror ? '#b56d80' : '#ffb3c6';
+                    wallMoulding = isHorror ? '#853246' : '#ff758f';
+                }
+
+                ctx.fillStyle = floorBase;
+                ctx.fillRect(0, 0, this.W, this.H);
+
+                // Tarimas de madera / Baldosas de parquet con variación de tonalidad
+                const tileSize = 64;
+                for (let x = 65; x < this.W - 65; x += tileSize) {
+                    const colIdx = Math.floor(x / tileSize);
+                    for (let y = 65; y < this.H - 65; y += tileSize) {
+                        const rowIdx = Math.floor(y / tileSize);
+                        ctx.fillStyle = ((colIdx + rowIdx) % 2 === 0) ? tileStripe1 : tileStripe2;
+                        ctx.fillRect(x, y, tileSize, tileSize);
+
+                        // Líneas sutiles de juntas
+                        ctx.strokeStyle = isHorror ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0.03)';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(x, y, tileSize, tileSize);
+                    }
+                }
+
+                // Alfombra circular navideña acogedora en el Taller de Referencia (1,1)
+                if (room.theme === 'cozy_wood') {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.ellipse(this.W / 2, this.H / 2 + 30, 220, 140, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = isHorror ? 'rgba(160, 40, 60, 0.22)' : 'rgba(255, 175, 190, 0.32)';
+                    ctx.fill();
+                    ctx.strokeStyle = isHorror ? 'rgba(120, 20, 40, 0.35)' : 'rgba(255, 110, 140, 0.45)';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // Sombras ambientales en las cuatro esquinas (Oclusión Ambiental 2D)
+                const cornerGrad = ctx.createRadialGradient(this.W/2, this.H/2, 280, this.W/2, this.H/2, 540);
+                cornerGrad.addColorStop(0, 'rgba(0,0,0,0)');
+                cornerGrad.addColorStop(1, isHorror ? 'rgba(20, 0, 5, 0.4)' : 'rgba(90, 40, 50, 0.12)');
+                ctx.fillStyle = cornerGrad;
+                ctx.fillRect(0, 0, this.W, this.H);
+
+                // 2. CAPA 2: PAREDES ARQUITECTÓNICAS CON PROFUNDIDAD, MOLDURAS Y ZÓCALOS
                 const wt = 65;
-                ctx.fillStyle = (room.theme === 'candy_kingdom') ? '#ffb3c6' : (room.theme === 'clinic_room') ? '#bde0fe' : '#f8d7da';
+                // Base del muro
+                ctx.fillStyle = wallBase;
                 ctx.fillRect(0, 0, this.W, wt);
                 ctx.fillRect(0, 0, wt, this.H);
                 ctx.fillRect(0, this.H - wt, this.W, wt);
                 ctx.fillRect(this.W - wt, 0, wt, this.H);
 
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 3;
-                ctx.strokeRect(wt, wt, this.W - wt * 2, this.H - wt * 2);
+                // Moldura superior / Zócalo arquitectónico interior
+                ctx.fillStyle = wallMoulding;
+                ctx.fillRect(wt - 6, wt - 6, this.W - (wt * 2) + 12, 6);
+                ctx.fillRect(wt - 6, this.H - wt, this.W - (wt * 2) + 12, 6);
+                ctx.fillRect(wt - 6, wt - 6, 6, this.H - (wt * 2) + 12);
+                ctx.fillRect(this.W - wt, wt - 6, 6, this.H - (wt * 2) + 12);
 
+                // Sombra de contacto proyectada por la pared norte sobre el suelo
+                const wallShadow = ctx.createLinearGradient(0, wt, 0, wt + 28);
+                wallShadow.addColorStop(0, isHorror ? 'rgba(0, 0, 0, 0.35)' : 'rgba(90, 40, 50, 0.18)');
+                wallShadow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = wallShadow;
+                ctx.fillRect(wt, wt, this.W - (wt * 2), 28);
+
+                // Guirnalda y luces navideñas dinámicas en el Taller de Referencia
+                if (room.theme === 'cozy_wood') {
+                    const t = performance.now() * 0.003;
+                    const colors = ['#ff5c8a', '#ffd166', '#06d6a0', '#118ab2', '#ff9f1c'];
+                    // Cable de guirnalda curvado
+                    ctx.strokeStyle = '#065a38';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    for (let lx = wt + 20; lx < this.W - wt - 20; lx += 48) {
+                        ctx.quadraticCurveTo(lx + 24, wt - 2, lx + 48, wt - 14);
+                    }
+                    ctx.stroke();
+
+                    for (let lx = wt + 24; lx < this.W - wt - 20; lx += 48) {
+                        const lightIdx = Math.floor(lx / 48) % colors.length;
+                        const blink = Math.sin(t * 3.5 + lx) > -0.2;
+                        if (blink) {
+                            ctx.fillStyle = colors[lightIdx];
+                            ctx.beginPath();
+                            ctx.arc(lx, wt - 8, 4.5, 0, Math.PI * 2);
+                            ctx.fill();
+                            // Resplandor cálido de la bombilla
+                            ctx.shadowColor = colors[lightIdx];
+                            ctx.shadowBlur = 8;
+                        }
+                    }
+                    ctx.shadowBlur = 0;
+                }
+
+                // Puertas
                 const dw = 110, cx = this.W / 2, cy = this.H / 2;
                 if (room.doors.top) this.renderDoor(ctx, cx - dw/2, 10, dw, wt - 5, room.lockedDoors.top);
                 if (room.doors.bottom) this.renderDoor(ctx, cx - dw/2, this.H - wt - 5, dw, wt - 5, room.lockedDoors.bottom);
@@ -1948,6 +2476,154 @@
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(isLocked ? '🔒' : '✨', x + w/2, y + h/2);
+                ctx.restore();
+            }
+
+            // =========================================================================
+            // CAPA DECORATIVA AMBIENTAL CON ESTILO INDIE PROFESIONAL
+            // =========================================================================
+            renderAmbientDecor(ctx, d) {
+                ctx.save();
+                ctx.translate(d.x, d.y);
+
+                if (d.type === 'toy_shelf') {
+                    // Estantería de madera tallada con juguetes en los estantes
+                    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                    this.drawRoundedRect(ctx, -38, 26, 76, 12, 6);
+                    ctx.fill();
+
+                    // Mueble de estantes
+                    const woodGrad = ctx.createLinearGradient(-35, -45, -35, 30);
+                    woodGrad.addColorStop(0, '#ddb892');
+                    woodGrad.addColorStop(1, '#b08968');
+                    ctx.fillStyle = woodGrad;
+                    this.drawRoundedRect(ctx, -35, -45, 70, 75, 8);
+                    ctx.fill();
+                    ctx.strokeStyle = '#7f5539';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Baldas interiores
+                    ctx.fillStyle = '#7f5539';
+                    ctx.fillRect(-33, -15, 66, 4);
+                    ctx.fillRect(-33, 10, 66, 4);
+
+                    // Juguetes en estantes
+                    ctx.font = '16px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🧸', -16, -20);
+                    ctx.fillText('🚀', 16, -20);
+                    ctx.fillText('🚂', -16, 5);
+                    ctx.fillText('🦆', 16, 5);
+                } else if (d.type === 'gift_stack') {
+                    // Cajas apiladas de regalos con lazos
+                    ctx.fillStyle = 'rgba(0,0,0,0.16)';
+                    this.drawRoundedRect(ctx, -24, 18, 48, 10, 5);
+                    ctx.fill();
+
+                    // Caja inferior
+                    ctx.fillStyle = '#ff70a6';
+                    this.drawRoundedRect(ctx, -20, 0, 40, 22, 5);
+                    ctx.fill();
+                    ctx.fillStyle = '#ffd166';
+                    ctx.fillRect(-20, 8, 40, 5);
+
+                    // Caja superior
+                    ctx.fillStyle = '#70d6ff';
+                    this.drawRoundedRect(ctx, -14, -18, 28, 18, 4);
+                    ctx.fill();
+                    ctx.fillStyle = '#ff70a6';
+                    ctx.fillRect(-14, -10, 28, 4);
+
+                    // Lazo superior
+                    ctx.font = '14px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🎀', 0, -22);
+                } else if (d.type === 'north_pole_banner') {
+                    // Cartel festivo del Polo Norte
+                    const bw = 240, bh = 28;
+                    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+                    this.drawRoundedRect(ctx, -bw/2 + 2, -bh/2 + 3, bw, bh, 8);
+                    ctx.fill();
+
+                    const bGrad = ctx.createLinearGradient(-bw/2, 0, bw/2, 0);
+                    bGrad.addColorStop(0, '#e63946');
+                    bGrad.addColorStop(0.5, '#f1faee');
+                    bGrad.addColorStop(1, '#e63946');
+                    ctx.fillStyle = bGrad;
+                    this.drawRoundedRect(ctx, -bw/2, -bh/2, bw, bh, 8);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffd166';
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+
+                    ctx.font = 'bold 12px Fredoka One';
+                    ctx.fillStyle = '#1d3557';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(d.text, 0, 1);
+                } else if (d.type === 'conveyor_belt') {
+                    // Cinta transportadora con piezas de juguetes
+                    const cw = d.w || 160;
+                    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                    this.drawRoundedRect(ctx, -cw/2, -10, cw, 22, 6);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#4a4e69';
+                    this.drawRoundedRect(ctx, -cw/2, -12, cw, 20, 6);
+                    ctx.fill();
+
+                    // Rodillos animados
+                    const offset = (performance.now() * 0.04) % 18;
+                    ctx.fillStyle = '#9a8c98';
+                    for (let rx = -cw/2 + offset; rx < cw/2; rx += 18) {
+                        ctx.fillRect(rx, -11, 4, 18);
+                    }
+
+                    // Mini juguete viajando por la cinta
+                    const toyX = -cw/2 + ((performance.now() * 0.05) % (cw - 20)) + 10;
+                    ctx.font = '14px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('⭐', toyX, -3);
+                } else if (d.type === 'medical_cabinet') {
+                    // Vitrina médica con viales
+                    ctx.fillStyle = '#caf0f8';
+                    this.drawRoundedRect(ctx, -26, -30, 52, 60, 6);
+                    ctx.fill();
+                    ctx.strokeStyle = '#0077b6';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.font = '16px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('💊', -10, -8);
+                    ctx.fillText('💉', 10, -8);
+                    ctx.fillText('🧪', 0, 16);
+                } else if (d.type === 'lab_pipes' || d.type === 'industrial_pipes' || d.type === 'candy_pipes') {
+                    // Tuberías industriales en la pared superior
+                    const pw = d.w || 160;
+                    ctx.fillStyle = (d.type === 'candy_pipes') ? '#ff758f' : (d.type === 'lab_pipes') ? '#00b4d8' : '#6c757d';
+                    this.drawRoundedRect(ctx, -pw/2, -8, pw, 14, 4);
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                } else if (d.type === 'oxygen_tank') {
+                    // Tanque de oxígeno / gas sedante
+                    ctx.fillStyle = '#023e8a';
+                    this.drawRoundedRect(ctx, -14, -26, 28, 52, 10);
+                    ctx.fill();
+                    ctx.fillStyle = '#90e0ef';
+                    ctx.fillRect(-10, -10, 20, 8);
+                } else if (d.type === 'cargo_rack' || d.type === 'pallet_stack') {
+                    // Palets y cajas industriales
+                    ctx.fillStyle = '#d4a373';
+                    this.drawRoundedRect(ctx, -30, -15, 60, 30, 4);
+                    ctx.fill();
+                    ctx.font = '20px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('📦', 0, 6);
+                }
+
                 ctx.restore();
             }
 
@@ -1985,11 +2661,33 @@
 
                 // Detalles sobre las mesas según tipo
                 if (f.type === 'medical_desk') {
-                    // Microscopio / Matraz de fórmulas
+                    // Monitor de ritmo cardíaco / Fórmulas médicas
                     ctx.font = '22px sans-serif';
                     ctx.textAlign = 'center';
                     ctx.fillText('🔬', f.x + 35, f.y + f.h/2 + 2);
                     ctx.fillText('🧪', f.x + f.w - 35, f.y + f.h/2 + 2);
+
+                    // Mini pantalla ECG parpadeante con gráfica de pulso
+                    ctx.fillStyle = '#0f172a';
+                    this.drawRoundedRect(ctx, f.x + f.w/2 - 28, f.y + 24, 56, 32, 4);
+                    ctx.fill();
+                    // Pulso verde con parpadeo
+                    const ecgPulse = (performance.now() * 0.005) % 1;
+                    const ecgFlicker = (Math.random() > 0.08);
+                    if (ecgFlicker) {
+                        ctx.strokeStyle = '#06d6a0';
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        const ex = f.x + f.w/2 - 24;
+                        const ey = f.y + 40;
+                        ctx.moveTo(ex, ey);
+                        ctx.lineTo(ex + 12, ey);
+                        ctx.lineTo(ex + 18, ey - 10);
+                        ctx.lineTo(ex + 24, ey + 8);
+                        ctx.lineTo(ex + 30, ey);
+                        ctx.lineTo(ex + 48, ey);
+                        ctx.stroke();
+                    }
                 } else if (f.title.includes('Peluche')) {
                     ctx.font = '20px sans-serif';
                     ctx.textAlign = 'center';
@@ -2054,13 +2752,17 @@
                 }
 
                 // Luz superior de estado (Verde si vacía, Roja si ocupada con elfo en tratamiento)
+                // Detalle inquietante: Parpadeo errático e irregular en las cápsulas
                 const isOccupied = (c.elfCount > 0);
-                ctx.fillStyle = isOccupied ? '#ff0054' : '#06d6a0';
+                const erraticFlicker = (Math.random() > 0.05);
+                const ledColor = isOccupied ? '#ff0054' : (erraticFlicker ? '#06d6a0' : '#005f73');
+
+                ctx.fillStyle = ledColor;
                 ctx.beginPath();
                 ctx.arc(c.x + c.w/2, c.y + 8, 5, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.shadowColor = isOccupied ? '#ff0054' : '#06d6a0';
-                ctx.shadowBlur = 8;
+                ctx.shadowColor = ledColor;
+                ctx.shadowBlur = erraticFlicker ? 9 : 2;
 
                 // Elfo dentro de la cápsula en tratamiento
                 if (c.elfCount > 0) {
@@ -2154,19 +2856,32 @@
             render3DGift(ctx, g) {
                 ctx.save();
                 ctx.translate(g.x, g.y);
-                const s = 38, h = 18;
+                const s = 38;
+
+                // EVENTO 2: Error de realidad temporal en el regalo (manchado de rojo / sangre)
+                const isGlitchRed = this.realityGlitch.active && this.realityGlitch.type === 'blood_gift';
+
                 ctx.fillStyle = 'rgba(0,0,0,0.14)';
                 ctx.beginPath();
                 ctx.ellipse(0, 14, 24, 10, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = g.color;
+                ctx.fillStyle = isGlitchRed ? '#8a0014' : g.color;
                 this.drawRoundedRect(ctx, -s/2, -s/2, s, s, 6);
                 ctx.fill();
 
-                ctx.fillStyle = g.ribbon;
+                ctx.fillStyle = isGlitchRed ? '#ff0033' : g.ribbon;
                 ctx.fillRect(-s/2, -4, s, 8);
                 ctx.fillRect(-4, -s/2, 8, s);
+
+                // Si está bajo el glitch de error de realidad, pequeña mancha perturbadora
+                if (isGlitchRed) {
+                    ctx.fillStyle = '#4a000b';
+                    ctx.beginPath();
+                    ctx.arc(6, -6, 5, 0, Math.PI * 2);
+                    ctx.arc(-8, 7, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
 
                 if (g.inspected) {
                     ctx.font = '18px sans-serif';
@@ -2184,7 +2899,11 @@
             render3DElf(ctx, e) {
                 ctx.save();
                 ctx.translate(e.x, e.y);
-                const bounce = Math.sin(performance.now() * 0.003) * 4;
+
+                // EVENTO 1: EL ELFO QUE DEJA DE TRABAJAR Y SE QUEDA MIRANDO FIJAMENTE A SANTA
+                const isStaring = e.isStaring;
+                const bounce = isStaring ? 0 : Math.sin(performance.now() * 0.003) * 4;
+
                 ctx.fillStyle = 'rgba(0,0,0,0.15)';
                 ctx.beginPath();
                 ctx.ellipse(0, 16, 18, 8, 0, 0, Math.PI * 2);
@@ -2200,12 +2919,45 @@
                 ctx.arc(0, bounce - 8, 12, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = '#222';
-                ctx.beginPath();
-                ctx.arc(-4, bounce - 9, 2.5, 0, Math.PI * 2);
-                ctx.arc(4, bounce - 9, 2.5, 0, Math.PI * 2);
-                ctx.fill();
+                // EVENTO 2: Error de realidad en expresión durante 1-2 frames (cara vacía / ojos negros)
+                const isGlitchFace = this.realityGlitch.active && this.realityGlitch.type === 'distorted_face';
 
+                if (isGlitchFace) {
+                    // Ojos oscuros y sonrisa distorsionada inquietante durante 1 frame
+                    ctx.fillStyle = '#0a0005';
+                    ctx.beginPath();
+                    ctx.arc(-4, bounce - 9, 3.8, 0, Math.PI * 2);
+                    ctx.arc(4, bounce - 9, 3.8, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.strokeStyle = '#0a0005';
+                    ctx.lineWidth = 1.8;
+                    ctx.beginPath();
+                    ctx.arc(0, bounce - 4, 4, 0, Math.PI);
+                    ctx.stroke();
+                } else if (isStaring) {
+                    // Mirada fija e inmóvil directa al jugador/Santa con pupilas dilatadas
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath();
+                    ctx.arc(-4, bounce - 9, 3.2, 0, Math.PI * 2);
+                    ctx.arc(4, bounce - 9, 3.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Reflejo blanco mínimo
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(-3, bounce - 10, 0.9, 0, Math.PI * 2);
+                    ctx.arc(5, bounce - 10, 0.9, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // Expresión normal alegre
+                    ctx.fillStyle = '#222';
+                    ctx.beginPath();
+                    ctx.arc(-4, bounce - 9, 2.5, 0, Math.PI * 2);
+                    ctx.arc(4, bounce - 9, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Sombrerito
                 ctx.fillStyle = e.hatColor;
                 ctx.beginPath();
                 ctx.moveTo(-11, bounce - 14);
@@ -2213,10 +2965,24 @@
                 ctx.lineTo(11, bounce - 14);
                 ctx.fill();
 
+                // Animación de trabajo si NO está observando fijamente
+                if (!isStaring) {
+                    const toolCycle = Math.sin(performance.now() * 0.008);
+                    ctx.font = '16px sans-serif';
+                    ctx.textAlign = 'center';
+                    if (e.craft === 'bear') {
+                        ctx.fillText('🪡', 16, bounce - 4 + toolCycle * 3);
+                    } else if (e.craft === 'train') {
+                        ctx.fillText('🖌️', 16, bounce - 4 + toolCycle * 3);
+                    } else if (e.craft === 'inspect') {
+                        ctx.fillText('🔍', 16, bounce - 4 + toolCycle * 2);
+                    }
+                }
+
                 ctx.font = 'bold 12px Quicksand';
-                ctx.fillStyle = '#5c3c78';
+                ctx.fillStyle = isStaring ? '#800f2f' : '#5c3c78';
                 ctx.textAlign = 'center';
-                ctx.fillText(`${e.name} ✨`, 0, bounce - 38);
+                ctx.fillText(isStaring ? `${e.name} ...` : `${e.name} ✨`, 0, bounce - 38);
                 ctx.restore();
             }
 
@@ -2263,6 +3029,11 @@
                 ctx.save();
                 ctx.translate(doc.x, doc.y);
 
+                // Movimiento repetitivo inquietante: sutil balanceo o golpeteo rítmico
+                const docTime = performance.now() * 0.003;
+                const docTwitch = Math.sin(docTime * 2.5) * 1.5;
+                const headTilt = Math.sin(docTime * 1.2) * 0.08;
+
                 // Sombra suave en suelo
                 ctx.fillStyle = 'rgba(0,0,0,0.18)';
                 ctx.beginPath();
@@ -2274,7 +3045,7 @@
                 coatGrad.addColorStop(0, '#ffffff');
                 coatGrad.addColorStop(1, '#e0f2fe');
                 ctx.fillStyle = coatGrad;
-                this.drawRoundedRect(ctx, -18, -12, 36, 28, 12);
+                this.drawRoundedRect(ctx, -18, -12 + docTwitch * 0.3, 36, 28, 12);
                 ctx.fill();
                 ctx.strokeStyle = '#bae6fd';
                 ctx.lineWidth = 1.5;
@@ -2284,14 +3055,17 @@
                 ctx.strokeStyle = '#0284c7';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.arc(0, -6, 9, 0, Math.PI);
+                ctx.arc(0, -6 + docTwitch * 0.3, 9, 0, Math.PI);
                 ctx.stroke();
                 ctx.fillStyle = '#0369a1';
                 ctx.beginPath();
-                ctx.arc(0, 5, 3.5, 0, Math.PI * 2);
+                ctx.arc(0, 5 + docTwitch * 0.3, 3.5, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Cabeza
+                // Cabeza con inclinación lenta y repetitiva
+                ctx.save();
+                ctx.rotate(headTilt);
+
                 ctx.fillStyle = '#fde047'; // Pelo rubio peinado
                 ctx.beginPath();
                 ctx.arc(0, -17, 13, 0, Math.PI * 2);
@@ -2322,11 +3096,51 @@
                 ctx.font = 'bold 8px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillText('✚', 0, -19);
+                ctx.restore();
+
+                // Detalle sutil en mano: jeringuilla con golpeteo rítmico repetitivo
+                ctx.fillStyle = '#48cae4';
+                ctx.fillRect(16, -2 + Math.sin(docTime * 4) * 3, 3, 14);
+                ctx.fillStyle = '#023e8a';
+                ctx.fillRect(15, -4 + Math.sin(docTime * 4) * 3, 5, 2);
 
                 // Nombre e indicador médico
                 ctx.font = 'bold 12px Fredoka One';
                 ctx.fillStyle = '#0284c7';
+                ctx.textAlign = 'center';
                 ctx.fillText(doc.name, 0, -32);
+                ctx.restore();
+            }
+
+            // Dibujar notas de la rebelión en el suelo
+            renderNotePickup(ctx, note) {
+                ctx.save();
+                ctx.translate(note.x, note.y);
+                const floatBob = Math.sin(performance.now() * 0.005) * 4;
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.beginPath();
+                ctx.ellipse(0, 10, 16, 7, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Pergamino amarillento
+                ctx.fillStyle = '#faedcd';
+                this.drawRoundedRect(ctx, -12, -14 + floatBob, 24, 20, 3);
+                ctx.fill();
+                ctx.strokeStyle = '#d4a373';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Líneas de texto garabateadas
+                ctx.fillStyle = '#7f5539';
+                ctx.fillRect(-8, -10 + floatBob, 16, 2);
+                ctx.fillRect(-8, -5 + floatBob, 12, 2);
+                ctx.fillRect(-8, 0 + floatBob, 14, 2);
+
+                // Exclamación sobre la nota
+                ctx.font = 'bold 12px Fredoka One';
+                ctx.fillStyle = '#d90429';
+                ctx.textAlign = 'center';
+                ctx.fillText('¡LEER! 📜', 0, -22 + floatBob);
                 ctx.restore();
             }
 
@@ -2352,220 +3166,194 @@
                     return;
                 }
 
-                const run = Math.sin(performance.now() * 0.015) * 5;
-                ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                // Renderizado con sombreado pixel-art por arquetipo de enemigo
+                const run = Math.sin(performance.now() * (elf.isFast ? 0.025 : 0.015)) * 5;
+                const sizeScale = elf.isBoss ? 1.4 : (elf.isHeavy ? 1.2 : 0.9);
+                ctx.scale(sizeScale, sizeScale);
+
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
                 ctx.beginPath();
                 ctx.ellipse(0, 16, 20, 9, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = elf.isBoss ? '#9d0208' : '#e63946';
+                // Color según tipo
+                const suitColor = elf.isBoss ? '#720026' : (elf.isHeavy ? '#4a4e69' : '#d90429');
+                ctx.fillStyle = suitColor;
                 ctx.beginPath();
                 ctx.ellipse(0, run + 2, 17, 15, 0, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.strokeStyle = '#111317';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
 
                 ctx.fillStyle = '#ffe5d9';
                 ctx.beginPath();
                 ctx.arc(0, run - 8, 12, 0, Math.PI * 2);
                 ctx.fill();
 
+                // Ojos diabólicos pixel art
                 ctx.fillStyle = '#d90429';
-                ctx.beginPath();
-                ctx.arc(-5, run - 9, 3, 0, Math.PI * 2);
-                ctx.arc(5, run - 9, 3, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.fillRect(-7, run - 11, 4, 3);
+                ctx.fillRect(3, run - 11, 4, 3);
 
-                ctx.font = 'bold 12px Fredoka One';
+                // Cuernos o bandana rebelde
+                if (elf.isBoss) {
+                    ctx.fillStyle = '#ffd166';
+                    ctx.beginPath();
+                    ctx.moveTo(-10, run - 16);
+                    ctx.lineTo(-4, run - 26);
+                    ctx.lineTo(0, run - 16);
+                    ctx.lineTo(4, run - 26);
+                    ctx.lineTo(10, run - 16);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (elf.isHeavy) {
+                    ctx.fillStyle = '#22223b';
+                    ctx.fillRect(-11, run - 16, 22, 6);
+                }
+
+                const elfLabel = elf.isBoss ? '¡EL LÍDER AMOTINADO! 👺' : (elf.isHeavy ? '¡ELFO PESADO! 🛡️' : '¡AMOTINADO RÁPIDO! ⚡');
+                ctx.font = 'bold 10px Fredoka One';
                 ctx.fillStyle = '#d90429';
                 ctx.textAlign = 'center';
-                ctx.fillText(elf.isBoss ? '¡LÍDER! 👺' : '¡AMOTINADO! 💢', 0, run - 38);
+                ctx.fillText(elfLabel, 0, run - 32);
                 ctx.restore();
             }
 
-            /* --- SANTA CLAUS CON VISTA Y DIRECCIÓN DINÁMICA --- */
+            /* --- SANTA CLAUS CON ROTACIÓN COMPLETA 360° HACIA EL CURSOR Y PIXEL ART RETRO --- */
             renderSantaFrontal(ctx, p) {
                 ctx.save();
                 ctx.translate(p.x, p.y - p.bounce);
 
+                // Respiración sutil en reposo (idle)
+                const breathe = p.isMoving ? 0 : Math.sin(performance.now() * 0.004) * 1.5;
                 const legWiggle = p.isMoving ? Math.sin(p.walkCycle) * 7 : 0;
 
-                // Sombra de contacto
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                // Sombra de contacto sincronizada y suave (en el suelo antes de rotar el cuerpo)
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
                 ctx.beginPath();
                 ctx.ellipse(0, 18 + p.bounce, 26, 11, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Determinar dirección de la mirada
-                const isLeft = (p.facing === 'left');
-                const isRight = (p.facing === 'right');
-                const isUp = (p.facing === 'up');
-                const isDown = (p.facing === 'down');
+                // Rotación dinámica en 360° hacia el cursor estilo Hotline Miami / The Binding of Isaac
+                const angle = p.aimAngle; // Radians
+                ctx.rotate(angle);
 
-                // Si mira a la izquierda, invertimos horizontalmente el dibujo
-                const flipX = isLeft ? -1 : 1;
-                ctx.scale(flipX, 1);
+                // Dibujar a Santa en perspectiva cenital de combate con pixel-shading
+                // 1. Pies / Botas negras animadas con el paso
+                ctx.fillStyle = '#111317';
+                ctx.fillRect(-12 + legWiggle * 0.4, -18, 9, 12);
+                ctx.fillRect(-12 - legWiggle * 0.4, 6, 9, 12);
 
-                // Offset de mirada para ojos, nariz, barba y sombrero
-                const gazeX = (isRight || isLeft) ? 6 : 0;
-                const gazeY = isUp ? -4 : (isDown ? 0 : -1);
-
-                // 1. Botas negras
-                ctx.fillStyle = '#1e2029';
-                this.drawRoundedRect(ctx, -14, 10 + legWiggle, 11, 14, 3);
-                this.drawRoundedRect(ctx, 3, 10 - legWiggle, 11, 14, 3);
-                ctx.fill();
-
-                // 2. Traje de terciopelo rojo mullido (Cuerpo frontal)
-                const bodyGrad = ctx.createLinearGradient(0, -18, 0, 14);
+                // 2. Traje de terciopelo rojo de Santa (torso visto desde arriba con hombros)
+                const bodyGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, 24);
                 bodyGrad.addColorStop(0, '#ff4d6d');
-                bodyGrad.addColorStop(1, '#d90429');
+                bodyGrad.addColorStop(0.7, '#d90429');
+                bodyGrad.addColorStop(1, '#800f2f');
                 ctx.fillStyle = bodyGrad;
-                this.drawRoundedRect(ctx, -22, -18, 44, 32, 14);
+                this.drawRoundedRect(ctx, -16, -18, 30, 36, 10);
                 ctx.fill();
+                ctx.strokeStyle = '#590d22';
+                ctx.lineWidth = 2;
+                ctx.stroke();
 
-                // 3. Cinturón negro con hebilla dorada
+                // 3. Cinturón negro de cuero con hebilla dorada
                 ctx.fillStyle = '#111317';
-                ctx.fillRect(-22, -2, 44, 8);
-
+                ctx.fillRect(-4, -18, 8, 36);
                 ctx.fillStyle = '#ffd166';
-                this.drawRoundedRect(ctx, -6 + gazeX * 0.8, -4, 12, 12, 2);
-                ctx.fill();
+                ctx.fillRect(-6, -6, 12, 12);
                 ctx.fillStyle = '#111317';
-                ctx.fillRect(-3 + gazeX * 0.8, -1, 6, 6);
+                ctx.fillRect(-3, -3, 6, 6);
 
-                if (!isUp) {
-                    // 4. Barba blanca esponjosa frontal (solo visible de frente o de perfil)
-                    ctx.fillStyle = '#f8f9fa';
-                    ctx.beginPath();
-                    ctx.moveTo(-16, -14);
-                    ctx.quadraticCurveTo(-18 + gazeX, 4, gazeX * 1.5, 12);
-                    ctx.quadraticCurveTo(18 + gazeX, 4, 16, -14);
-                    ctx.fill();
+                // 4. Cabeza redonda y gorro navideño inclinado hacia atrás
+                ctx.fillStyle = '#ffe5d9';
+                ctx.beginPath();
+                ctx.arc(4, 0, 11, 0, Math.PI * 2);
+                ctx.fill();
 
-                    ctx.beginPath();
-                    ctx.arc(-8 + gazeX, -4, 6, 0, Math.PI * 2);
-                    ctx.arc(8 + gazeX, -4, 6, 0, Math.PI * 2);
-                    ctx.arc(gazeX, 0, 7, 0, Math.PI * 2);
-                    ctx.fill();
+                // Barba blanca voluminosa al frente (apuntando hacia la dirección de la mirada)
+                ctx.fillStyle = '#f8f9fa';
+                ctx.beginPath();
+                ctx.arc(10, 0, 8, -Math.PI / 2, Math.PI / 2);
+                ctx.fill();
 
-                    // 5. Cara y mejillas rosadas
-                    ctx.fillStyle = '#ffe5d9';
-                    ctx.beginPath();
-                    ctx.arc(gazeX * 0.8, -16 + gazeY, 13, 0, Math.PI * 2);
-                    ctx.fill();
+                // Ojos pixelados decididos mirando al frente
+                ctx.fillStyle = '#111317';
+                ctx.fillRect(8, -4, 3, 2);
+                ctx.fillRect(8, 2, 3, 2);
 
-                    // Nariz
-                    ctx.fillStyle = '#ff758f';
-                    ctx.beginPath();
-                    ctx.arc(gazeX * 1.2, -14 + gazeY, 4.5, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // Ojos
-                    ctx.fillStyle = '#222';
-                    ctx.beginPath();
-                    if (isRight || isLeft) {
-                        // Perfil: un ojo más centrado y visible
-                        ctx.arc(3 + gazeX, -18 + gazeY, 2.4, 0, Math.PI * 2);
-                        ctx.arc(-4 + gazeX, -18 + gazeY, 2.0, 0, Math.PI * 2);
-                    } else {
-                        // De frente
-                        ctx.arc(-5, -18, 2.2, 0, Math.PI * 2);
-                        ctx.arc(5, -18, 2.2, 0, Math.PI * 2);
-                    }
-                    ctx.fill();
-
-                    // Brillo en los ojos
-                    ctx.fillStyle = '#fff';
-                    ctx.beginPath();
-                    ctx.arc(-4 + (gazeX ? 1 : 0), -19 + gazeY, 0.8, 0, Math.PI * 2);
-                    ctx.arc(6 + (gazeX ? 1 : 0), -19 + gazeY, 0.8, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // Cejas
-                    ctx.fillStyle = '#fff';
-                    ctx.fillRect(-7 + gazeX, -22 + gazeY, 5, 2.5);
-                    ctx.fillRect(2 + gazeX, -22 + gazeY, 5, 2.5);
-                } else {
-                    // De espaldas: Se ve la capucha y pelo blanco por detrás
-                    ctx.fillStyle = '#f8f9fa';
-                    ctx.beginPath();
-                    ctx.arc(0, -12, 14, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                // 6. Gorro navideño
+                // Gorro rojo con borla blanca hacia la espalda
                 ctx.fillStyle = '#d90429';
                 ctx.beginPath();
-                ctx.moveTo(-14, -22 + gazeY);
-                ctx.lineTo(16, -22 + gazeY);
-                ctx.quadraticCurveTo(24 + gazeX, -28, 20 + gazeX, -38);
-                ctx.lineTo(-4 + gazeX, -34);
+                ctx.moveTo(-2, -9);
+                ctx.lineTo(-14, 0);
+                ctx.lineTo(-2, 9);
+                ctx.closePath();
                 ctx.fill();
-
-                ctx.fillStyle = '#ffffff';
-                this.drawRoundedRect(ctx, -16, -26 + gazeY, 32, 7, 3);
-                ctx.fill();
-
-                // Borla blanca del gorro
-                ctx.beginPath();
-                ctx.arc(22 + gazeX, -36, 6, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 7. Si Santa lleva un elfo en brazos (Transportándolo al doctor)
-                if (p.carryingRebel) {
-                    this.renderCarriedElf(ctx, p.carryingRebel);
-                }
-
-                // 8. Manos con guantes blancos y arma empuñada
-                const swingOffset = Math.sin(p.swingAnim * Math.PI) * 22; // Barrido dinámico más amplio
+                // Borla blanca
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
-                ctx.arc(-22, 0, 5, 0, Math.PI * 2);
-                ctx.arc(22, 0 + swingOffset * 0.4, 5, 0, Math.PI * 2);
+                ctx.arc(-15, 0, 4.5, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Renderizado y orientación precisa del arma empuñada
+                // 5. Manos enguantadas y arma empuñada apuntando DIRECTAMENTE hacia el cursor
+                const swingOffset = Math.sin(p.swingAnim * Math.PI) * 16;
+
+                // Mano izquierda (apoyo)
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(12, -14, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Mano derecha (empuña el arma al frente)
+                ctx.beginPath();
+                ctx.arc(16 + swingOffset * 0.3, 12, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // DIBUJAR ARMA ORIENTADA AL CURSOR
                 ctx.save();
-                ctx.translate(22, 0 + swingOffset * 0.4);
+                ctx.translate(18, 10);
 
-                if (p.weapon === 'candy_cane') {
-                    // Animación de barrido estilo swing agresivo
-                    ctx.rotate(p.swingAnim * 2.2 - 0.4);
-                    ctx.font = '28px sans-serif';
+                if (p.weapon === 'candy_cane' || p.weapon === 'lollipop') {
+                    ctx.rotate(p.swingAnim * 1.8 - 0.3);
+                    ctx.font = '24px sans-serif';
                     ctx.textAlign = 'center';
-                    ctx.fillText('🍭', 4, -12);
-                } else if (p.weapon === 'lollipop') {
-                    ctx.rotate(p.swingAnim * 2.5 - 0.5);
-                    ctx.font = '30px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('🍭', 4, -12);
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('🍭', 12, -4);
                 } else if (p.weapon === 'gun') {
-                    // Cañón apuntando hacia adelante: si mira hacia arriba o de espaldas, rota acordemente
-                    let gunAngle = 0;
-                    if (isUp) gunAngle = -Math.PI / 2;
-                    else if (isDown) gunAngle = Math.PI / 3;
-                    else gunAngle = 0; // Apuntando al frente del perfil
-
-                    ctx.rotate(gunAngle - (p.swingAnim * 0.4));
-                    // Dibujar pistola de metal detallada con cañón apuntando al frente
+                    // Pistola táctica de metal de Hotline Miami orientada hacia el cursor
                     ctx.fillStyle = '#2b2d42';
-                    this.drawRoundedRect(ctx, -2, -6, 20, 8, 2);
+                    this.drawRoundedRect(ctx, 0, -5, 18, 7, 2);
                     ctx.fill();
-                    ctx.fillStyle = '#4a4e69';
-                    this.drawRoundedRect(ctx, 4, 2, 7, 10, 2);
-                    ctx.fill();
-                    // Cañón / Boca del arma
                     ctx.fillStyle = '#111317';
-                    ctx.fillRect(18, -4, 4, 4);
+                    this.drawRoundedRect(ctx, 4, 0, 5, 8, 2);
+                    ctx.fill();
+                    // Cañón / boca del arma
+                    ctx.fillStyle = '#8d99ae';
+                    ctx.fillRect(16, -4, 4, 4);
 
-                    // Flash de disparo en el cañón
+                    // Muzzle flash sutil en la punta (sin cegar la pantalla completa)
                     if (p.swingAnim > 0.4) {
                         ctx.fillStyle = '#ffd166';
                         ctx.beginPath();
-                        ctx.arc(24, -2, 6, 0, Math.PI * 2);
+                        ctx.arc(23, -2, 4.5, 0, Math.PI * 2);
                         ctx.fill();
                     }
                 }
                 ctx.restore();
+
+                // Si Santa lleva un elfo en brazos (Transportándolo)
+                if (p.carryingRebel) {
+                    ctx.save();
+                    ctx.translate(14, 0);
+                    ctx.fillStyle = '#ff9f1c';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.font = '10px sans-serif';
+                    ctx.fillText('😈', -5, 4);
+                    ctx.restore();
+                }
 
                 ctx.restore();
             }

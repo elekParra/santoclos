@@ -3,6 +3,86 @@
 
 ---
 
+## 📅 Versión 2.4.0 — Rotación 360° al Cursor, Pixel Art Shading, Cinemática Prólogo y Nuevas Salas con Notas
+*Fecha: 06 de Noviembre, 2026*
+
+### 🎯 Rotación Continua en 360° y Apuntado Libre al Cursor
+- Santa Claus rota ahora su cuerpo, hombros y armas libremente en **360 grados exactos** siguiendo en tiempo real la posición del cursor del ratón (estilo Hotline Miami y The Binding of Isaac).
+- **Proyectiles y Muzzle Flash de Precisión:** Las balas y los barridos de bastón se disparan directamente en el ángulo de la mira del cursor con estela brillante.
+- **Eliminación del Flash Cegador:** Se retiró el destello blanco invasivo de pantalla completa al disparar, reemplazándolo por un fogonazo de cañón concentrado y realista en la boca del arma.
+
+### 🎨 Renderizado de Personajes y Enemigos con Pixel Art Shading
+- **Sprite de Santa Rediseñado:** Cuerpo con volumen circular cenital, cinturón de hebilla dorada pixel-art, gorro puntiagudo hacia atrás con borla oscilante y postura de doble empuñadura táctica.
+- **Arquetipos de Enemigos Diferenciados:**
+  - **Amotinado Rápido (Scout):** Ágil, ataca en emboscadas veloces con cuchillas.
+  - **Elfo Pesado (Heavy):** Blindado con bandana oscura, mayor resistencia y golpes contundentes.
+  - **Líder Amotinado (Brute/Boss):** De gran tamaño con corona dorada improvisada, túnica carmesí profunda y alta vitalidad.
+
+### 🎬 Cinemática de Introducción Narrativa
+- Nueva pantalla de prólogo atmosférico antes de comenzar la partida con tipografía retro y animación de personajes:
+  > *"Un día Papá Noel no iba a tener una Navidad normal..."*
+- Describe los rumores de explotación en la fábrica, las cápsulas de reprogramación y la rebelión latente.
+
+### 🗺️ Nuevas Habitaciones Industriales y Notas de Rebelión
+- **Fundición de Juguetes & Maquinaria Pesada (1,2 - Sur):** Hornos de fundición, prensas hidráulicas y notas arrugadas de los operarios disidentes.
+- **Caldera de Vapor & Generador Nuclear (0,2 - Suroeste):** Caldera colosal a carbón y manifiestos de sabotaje esparcidos por el suelo con texto interactivo al aproximarse (`📜 "¡Libertad o sabotaje!"`).
+
+---
+
+## 📅 Versión 2.3.0 — Remasterización Gráfica Completa: Habitación de Referencia, Profundidad y Animaciones Vivas
+*Fecha: 06 de Noviembre, 2026*
+
+### 🏰 Habitación de Referencia (Taller Central de Regalos)
+- **Suelo con Textura de Parquet y Juntas:** Acabado de tarimas de madera de doble tonalidad (`#fef6ed` / `#fbeedb`) con líneas de unión y alfombra circular festiva bajo los artesanos.
+- **Oclusión Ambiental 2D:** Gradiente radial en esquinas y sombra proyectada de 28px de profundidad por la pared norte sobre el pavimento.
+- **Molduras y Zócalos Arquitectónicos:** Muros perimetrales con remates interiores que aportan relieve y sensación de edificio real.
+- **Decoración de Fondo No Intrusiva:** Estanterías de madera con juguetes en 3D (`🧸`, `🚀`, `🚂`), pilas de regalos con lazos, cartel del Polo Norte y cintas transportadoras con piezas animadas viajando por los rodillos.
+
+### 🎭 Santa Claus con Expresividad y Animaciones Vivas
+- **Respiración Natural en Reposo (Idle):** El torso, la barba y el gorro se elevan rítmicamente en ciclos suaves de respiración cuando está quieto.
+- **Mejillas Sonrosadas Cartoon:** Rubor facial de terciopelo que resalta la simpatía del personaje en el Acto 1.
+- **Sombra de Contacto Proporcional:** Óvalo de sombra suave sincronizado con el balanceo y la altura de Santa para evitar la sensación de estar flotando.
+
+### 📦 Escenarios Ambientales en Todas las Salas
+- **Laboratorio Clínico:** Vitrinas médicas (`medical_cabinet`) con fármacos y sedantes, tuberías criogénicas y tanques de oxígeno a presión.
+- **Almacén de Cajas:** Estanterías de carga, tuberías industriales, pilas de palets y líneas de precaución.
+- **Taller de Golosinas:** Conducciones de almíbar y tanques de azúcar.
+
+---
+
+## 📅 Versión 2.2.0 — Atmósfera Viva, Terror Psicológico, Degradación Progresiva y El Primer Disparo
+*Fecha: 06 de Noviembre, 2026*
+
+### 📳 Ajuste Preciso del Temblor de Vitalidad
+- El temblor de cámara se configuró para activarse **únicamente cuando a Santa le queda 30 HP o menos** (`hp <= 30`), aumentando en intensidad y desorientación de forma dramática a medida que roza el peligro crítico (hasta 9.0px).
+
+### 🎄 Acto 1 Enriquecido — Un Taller Navideño Lleno de Vida
+- **Luces Navideñas Dinámicas:** Guirnalda de bombillas de colores cálidos y pastel que parpadean rítmicamente en la cornisa superior del taller.
+- **Actividades de Artesanía en los Elfos:** Pimpollo (costura de peluches `🪡`), Cascabel (pintura de trenecitos con pincel `🖌️`) y Copito (inspección de calidad con lupa `🔍`) cuentan con animaciones independientes de herramientas y trabajo.
+
+### 🏥 Laboratorio del Dr. Valeriano — Tensión Inquietante Sutil
+- **Monitores ECG Activos:** Mini pantalla con trazado de electrocardiograma osciloscópico verde y parpadeo de señal clínica en el escritorio médico.
+- **Cápsulas con Parpadeo Errático:** El LED de las cabinas de reacondicionamiento exhibe micro-fluctuaciones lumínicas irregulares.
+- **Comportamiento Obsesivo del Dr. Valeriano:** Micro-inclinaciones de cabeza repetitivas y golpeteo rítmico de jeringuilla en la mano.
+
+### 👁️ Los Tres Elementos de Terror Psicológico
+1. **El Elfo que Deja de Trabajar:** Ocasionalmente, al acercarse Santa a un elfo artesano, este cesa su labor de inmediato, gira la cabeza hacia Santa con pupilas dilatadas y se queda inmóvil observándolo fijamente (`...`). Al alejarse Santa, retoma su actividad normal como si nada hubiese ocurrido.
+2. **El Error de Realidad (1-2 Frames):** Micro-glitches impredecibles de 70ms donde un regalo aparece momentáneamente teñido de sangre carmesí, la cara de un elfo pierde sus facciones volviéndose vacía y oscura, o la imagen sufre un salto de línea VHS.
+3. **La Música que no Debería Sonar:** Inserción de notas anómalas con micro-desafinaciones sub-armónicas, timbres metálicos inesperados y ruidos industriales casi imperceptibles en la caja de música navideña.
+
+### 📺 Sistema Reutilizable de Degradación Audiovisual Progresiva
+- Control dinámico de corrupción (`corruptionLevel` de 0.05 a 1.0) en base al avance de la trama.
+- Renderizado de aberración cromática / separación de canales RGB, líneas de barrido scanline de televisión CRT y desaturación paulatina de paredes y suelos.
+
+### 💥 El Primer Disparo — El Punto de No Retorno
+- Al disparar la pistola de metal por primera vez se desata una secuencia audiovisual memorable:
+  - Detención abrupta de la melodía navideña de cajita de música.
+  - Cañonazo atronador de frecuencias graves y ruido filtrado.
+  - Flash rojo sangriento con aberración cromática extrema.
+  - Reanudación de la banda sonora convertida en tonos menores distorsionados y hostiles.
+
+---
+
 ## 📅 Versión 2.1.0 — Corazón Animado con Vaciado Dinámico, Temblor de Pantalla y Tensión Oscura
 *Fecha: 06 de Noviembre, 2026*
 
